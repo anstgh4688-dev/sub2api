@@ -697,8 +697,8 @@ func TestFrontendServer_Middleware(t *testing.T) {
 			contentType string
 			body        string
 		}{
-			{path: "/robots.txt", contentType: "text/plain", body: "Sitemap: https://ai.myrt.cc/sitemap.xml"},
-			{path: "/sitemap.xml", contentType: "xml", body: "<loc>https://ai.myrt.cc/</loc>"},
+			{path: "/robots.txt", contentType: "text/plain", body: "Sitemap: https://api.myrt.cc/sitemap.xml"},
+			{path: "/sitemap.xml", contentType: "xml", body: "<loc>https://api.myrt.cc/</loc>"},
 			{path: "/2dc46cc25defb40506e815a9fe647050.txt", contentType: "text/plain", body: "2dc46cc25defb40506e815a9fe647050"},
 		}
 

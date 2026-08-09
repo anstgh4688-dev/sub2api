@@ -18,4 +18,4 @@ Disallow: /purchase
 Disallow: /payment/
 Disallow: /subscriptions
 
-Sitemap: https://ai.myrt.cc/sitemap.xml
+Sitemap: https://api.myrt.cc/sitemap.xml
