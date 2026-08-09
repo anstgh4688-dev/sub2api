@@ -1,6 +1,6 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 
-export const SEO_SITE_ORIGIN = 'https://ai.myrt.cc'
+export const SEO_SITE_ORIGIN = 'https://api.myrt.cc'
 
 const DEFAULT_DESCRIPTION =
   'Sub2API provides unified access to Claude, GPT, Gemini and other leading AI models with smart routing and live health monitoring.'
