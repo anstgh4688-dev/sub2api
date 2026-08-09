@@ -11,6 +11,8 @@ import { getSetupStatus } from '@/api/setup'
 import { updateFavicon } from '@/utils/branding'
 import { FeatureFlags, isFeatureFlagEnabled } from '@/utils/featureFlags'
 import { resolveSiteBillingMode } from '@/utils/siteBillingMode'
+import { applyRouteSeo } from '@/utils/seo'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
 const route = useRoute()
@@ -20,14 +22,23 @@ const subscriptionStore = useSubscriptionStore()
 const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
+const { locale, t } = useI18n()
 
-function updateDocumentTitle() {
+function updateDocumentMetadata() {
   const customMenuItems = [
     ...(appStore.cachedPublicSettings?.custom_menu_items ?? []),
     ...(authStore.isAdmin ? adminSettingsStore.customMenuItems : []),
   ]
-  document.title = resolveRouteDocumentTitle(route, appStore.siteName, customMenuItems, {
-    billingMode: resolveSiteBillingMode(appStore.cachedPublicSettings),
+  applyRouteSeo({
+    route,
+    fallbackTitle: resolveRouteDocumentTitle(route, appStore.siteName, customMenuItems, {
+      billingMode: resolveSiteBillingMode(appStore.cachedPublicSettings),
+    }),
+    siteName: appStore.siteName,
+    siteLogo: appStore.siteLogo,
+    siteSubtitle: appStore.cachedPublicSettings?.site_subtitle,
+    locale: locale.value,
+    translate: t,
   })
 }
 
@@ -53,8 +64,9 @@ watch(
     () => appStore.cachedPublicSettings?.payment_balance_disabled,
     () => authStore.isAdmin,
     () => adminSettingsStore.customMenuItems,
+    () => locale.value,
   ],
-  updateDocumentTitle,
+  updateDocumentMetadata,
   { deep: true }
 )
 
@@ -157,7 +169,7 @@ onMounted(async () => {
   await appStore.fetchPublicSettings()
 
   // Re-resolve document title now that site settings are available
-  updateDocumentTitle()
+  updateDocumentMetadata()
 })
 </script>
 

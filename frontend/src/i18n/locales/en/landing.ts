@@ -5,6 +5,13 @@ export default {
   },
   // Home Page
   home: {
+    seo: {
+      title: 'Unified AI API Gateway for Claude, GPT and Gemini',
+      description: 'Sub2API provides one API key for Claude, GPT, Gemini and other leading AI models through a self-operated account pool with smart routing, sticky sessions and live health monitoring.',
+      keywords: 'AI API,AI API gateway,Claude API,GPT API,Gemini API,LLM API,Sub2API'
+    },
+    navigation: 'Home navigation',
+    capabilities: 'Platform capabilities',
     viewOnGithub: 'View on GitHub',
     viewDocs: 'View Documentation',
     docs: 'Docs',
@@ -14,13 +21,84 @@ export default {
     login: 'Login',
     getStarted: 'Get Started',
     goToDashboard: 'Go to Dashboard',
-    // User-focused value proposition
-    heroSubtitle: 'One Key, All AI Models',
-    heroDescription: 'No need to manage multiple subscriptions. Access Claude, GPT, Gemini and more with a single API key',
+    // Homepage H1: the value proposition (the site name lives in the nav + hero eyebrow)
+    heroHeadline: 'One Key, All AI Models',
+    heroDescription: 'A self-hosted pool of official subscription accounts, operated by us end to end. One API key connects you directly to Claude, GPT, Gemini and more — no proxy required, with smart routing and live health monitoring.',
+    poolBadge: 'Self-Hosted Pool · Official Subscriptions',
+    directBadge: 'Direct Connect · No Proxy',
+    stats: {
+      selfOperated: 'Self-Operated Pool',
+      platforms: 'Platforms Connected',
+      monitoring: 'Health Monitoring',
+      failover: 'Auto Failover'
+    },
     tags: {
       subscriptionToApi: 'Subscription to API',
+      selfHostedPool: 'Self-Hosted Pool',
       stickySession: 'Session Persistence',
       realtimeBilling: 'Pay As You Go'
+    },
+    // Self-hosted pool section
+    pool: {
+      title: 'A Pool We Build and Run Ourselves',
+      subtitle: 'Every upstream account is an official subscription registered and operated by our platform — no shared rides, no resold seats. Fully controlled sourcing you can rely on.',
+      caption: 'Pool nodes live · all self-operated',
+      features: {
+        owned: {
+          title: 'Official & Self-Operated',
+          desc: 'Every account in the pool is an official subscription we registered and maintain ourselves — transparent sourcing, zero shared-account risk'
+        },
+        monitor: {
+          title: 'Real-Time Health Checks',
+          desc: '24/7 monitoring of availability and quota for every account; unhealthy nodes are fenced off in seconds with zero impact on your requests'
+        },
+        schedule: {
+          title: 'Smart Routing & Sticky Sessions',
+          desc: 'Requests are balanced by load and health, and each session sticks to the same account so context never breaks'
+        },
+        scale: {
+          title: 'Elastic Capacity',
+          desc: 'The pool scales with demand — capacity is added automatically at peak, so no rate-limit queues'
+        }
+      }
+    },
+    // Direct connect section
+    direct: {
+      title: 'Direct Connect, Zero Proxy Needed',
+      subtitle: 'Optimized routes straight to official model providers — no VPN, no mirrors. Point your official client or SDK at our endpoint and it just works.',
+      features: {
+        noProxy: {
+          title: 'No Proxy Required',
+          desc: 'No VPN, no mirror sites, no network setup — drop your key into any official client and start calling'
+        },
+        bgp: {
+          title: 'Multi-Line BGP Routes',
+          desc: 'Optimized peering across all major carriers with automatic best-path selection for low, stable latency'
+        },
+        clients: {
+          title: 'Plug-and-Play Clients',
+          desc: 'Claude Code, Codex, Gemini CLI, Cursor and more work out of the box — full official-grade model quality'
+        }
+      }
+    },
+    // Quick start steps
+    steps: {
+      title: 'Live in Three Steps',
+      subtitle: 'From sign-up to your first request in minutes',
+      items: {
+        key: {
+          title: 'Create an API Key',
+          desc: 'Sign up and generate your key from the dashboard in one click'
+        },
+        call: {
+          title: 'Call the Unified API',
+          desc: 'Drop the key into any compatible client or SDK — no code changes needed'
+        },
+        route: {
+          title: 'Pool Routes It',
+          desc: 'Requests are automatically routed to the healthiest self-operated account'
+        }
+      }
     },
     // Pain points section
     painPoints: {
@@ -46,8 +124,8 @@ export default {
     },
     // Solutions section
     solutions: {
-      title: 'We Solve These Problems',
-      subtitle: 'Three simple steps to stress-free AI access'
+      title: 'Core Capabilities',
+      subtitle: 'A stable, controllable and transparent control plane for AI traffic'
     },
     features: {
       unifiedGateway: 'One-Click Access',
@@ -110,7 +188,8 @@ export default {
       button: 'Sign Up Free'
     },
     footer: {
-      allRightsReserved: 'All rights reserved.'
+      allRightsReserved: 'All rights reserved.',
+      links: 'Footer links'
     }
   },
 

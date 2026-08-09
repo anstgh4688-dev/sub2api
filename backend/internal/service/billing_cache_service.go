@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -38,15 +39,7 @@ var (
 	ErrUserPlatformMonthlyQuotaExhausted = infraerrors.TooManyRequests("USER_PLATFORM_MONTHLY_QUOTA_EXHAUSTED", "Monthly usage quota exhausted for this platform.")
 )
 
-// subscriptionCacheData 订阅缓存数据结构（内部使用）
-type subscriptionCacheData struct {
-	Status       string
-	ExpiresAt    time.Time
-	DailyUsage   float64
-	WeeklyUsage  float64
-	MonthlyUsage float64
-	Version      int64
-}
+type subscriptionCacheData = SubscriptionCacheData
 
 // 缓存写入任务类型
 type cacheWriteKind int
@@ -54,7 +47,6 @@ type cacheWriteKind int
 const (
 	cacheWriteSetBalance cacheWriteKind = iota
 	cacheWriteSetSubscription
-	cacheWriteUpdateSubscriptionUsage
 	cacheWriteDeductBalance
 	cacheWriteUpdateRateLimitUsage
 )
@@ -221,12 +213,8 @@ func (s *BillingCacheService) cacheWriteWorker(ch <-chan cacheWriteTask) {
 		case cacheWriteSetBalance:
 			s.setBalanceCache(ctx, task.userID, task.balance)
 		case cacheWriteSetSubscription:
-			s.setSubscriptionCache(ctx, task.userID, task.groupID, task.subscriptionData)
-		case cacheWriteUpdateSubscriptionUsage:
-			if s.cache != nil {
-				if err := s.cache.UpdateSubscriptionUsage(ctx, task.userID, task.groupID, task.amount); err != nil {
-					logger.LegacyPrintf("service.billing_cache", "Warning: update subscription cache failed for user %d group %d: %v", task.userID, task.groupID, err)
-				}
+			if err := s.setSubscriptionCache(ctx, task.userID, task.groupID, task.subscriptionData); err != nil {
+				logger.LegacyPrintf("service.billing_cache", "Warning: set subscription cache failed for user %d group %d: %v", task.userID, task.groupID, err)
 			}
 		case cacheWriteDeductBalance:
 			if s.cache != nil {
@@ -252,8 +240,6 @@ func cacheWriteKindName(kind cacheWriteKind) string {
 		return "set_balance"
 	case cacheWriteSetSubscription:
 		return "set_subscription"
-	case cacheWriteUpdateSubscriptionUsage:
-		return "update_subscription_usage"
 	case cacheWriteDeductBalance:
 		return "deduct_balance"
 	case cacheWriteUpdateRateLimitUsage:
@@ -420,7 +406,7 @@ func (s *BillingCacheService) GetSubscriptionStatus(ctx context.Context, userID,
 	// 尝试从缓存读取
 	cacheData, err := s.cache.GetSubscriptionCache(ctx, userID, groupID)
 	if err == nil && cacheData != nil {
-		return s.convertFromPortsData(cacheData), nil
+		return cacheData, nil
 	}
 
 	// 缓存未命中，从数据库读取
@@ -440,88 +426,91 @@ func (s *BillingCacheService) GetSubscriptionStatus(ctx context.Context, userID,
 	return data, nil
 }
 
-func (s *BillingCacheService) convertFromPortsData(data *SubscriptionCacheData) *subscriptionCacheData {
-	return &subscriptionCacheData{
-		Status:       data.Status,
-		ExpiresAt:    data.ExpiresAt,
-		DailyUsage:   data.DailyUsage,
-		WeeklyUsage:  data.WeeklyUsage,
-		MonthlyUsage: data.MonthlyUsage,
-		Version:      data.Version,
-	}
-}
-
-func (s *BillingCacheService) convertToPortsData(data *subscriptionCacheData) *SubscriptionCacheData {
-	return &SubscriptionCacheData{
-		Status:       data.Status,
-		ExpiresAt:    data.ExpiresAt,
-		DailyUsage:   data.DailyUsage,
-		WeeklyUsage:  data.WeeklyUsage,
-		MonthlyUsage: data.MonthlyUsage,
-		Version:      data.Version,
-	}
-}
-
 // getSubscriptionFromDB 从数据库获取订阅数据
 func (s *BillingCacheService) getSubscriptionFromDB(ctx context.Context, userID, groupID int64) (*subscriptionCacheData, error) {
 	sub, err := s.subRepo.GetActiveByUserIDAndGroupID(ctx, userID, groupID)
 	if err != nil {
 		return nil, fmt.Errorf("get subscription: %w", err)
 	}
+	return subscriptionCacheSnapshot(sub), nil
+}
 
-	return &subscriptionCacheData{
-		Status:       sub.Status,
+func (s *BillingCacheService) getCurrentSubscriptionFromDB(ctx context.Context, userID, groupID int64) (*subscriptionCacheData, error) {
+	sub, err := s.subRepo.GetByUserIDAndGroupID(ctx, userID, groupID)
+	if err != nil {
+		return nil, fmt.Errorf("get subscription: %w", err)
+	}
+	return subscriptionCacheSnapshot(sub), nil
+}
+
+func subscriptionCacheSnapshot(sub *UserSubscription) *SubscriptionCacheData {
+	if sub == nil {
+		return nil
+	}
+	status := sub.Status
+	if sub.DeletedAt != nil {
+		status = SubscriptionStatusRevoked
+	}
+	return &SubscriptionCacheData{
+		Status:       status,
 		ExpiresAt:    sub.ExpiresAt,
 		DailyUsage:   sub.DailyUsageUSD,
 		WeeklyUsage:  sub.WeeklyUsageUSD,
 		MonthlyUsage: sub.MonthlyUsageUSD,
-		Version:      sub.UpdatedAt.Unix(),
-	}, nil
+		Version:      sub.CacheRevision,
+	}
 }
 
 // setSubscriptionCache 设置订阅缓存
-func (s *BillingCacheService) setSubscriptionCache(ctx context.Context, userID, groupID int64, data *subscriptionCacheData) {
+func (s *BillingCacheService) setSubscriptionCache(ctx context.Context, userID, groupID int64, data *subscriptionCacheData) error {
+	if s.cache == nil || data == nil {
+		return nil
+	}
+	return s.cache.SetSubscriptionCache(ctx, userID, groupID, data)
+}
+
+// StoreSubscriptionSnapshot synchronously publishes an exact post-commit snapshot.
+func (s *BillingCacheService) StoreSubscriptionSnapshot(ctx context.Context, userID, groupID int64, data *SubscriptionCacheData) error {
+	return s.setSubscriptionCache(ctx, userID, groupID, data)
+}
+
+// QueueSubscriptionSnapshot asynchronously publishes an exact post-commit snapshot.
+// Queue saturation falls back to a synchronous CAS write because dropping a committed
+// usage snapshot would leave quota enforcement behind the database.
+func (s *BillingCacheService) QueueSubscriptionSnapshot(userID, groupID int64, data *SubscriptionCacheData) {
 	if s.cache == nil || data == nil {
 		return
 	}
-	if err := s.cache.SetSubscriptionCache(ctx, userID, groupID, s.convertToPortsData(data)); err != nil {
-		logger.LegacyPrintf("service.billing_cache", "Warning: set subscription cache failed for user %d group %d: %v", userID, groupID, err)
-	}
-}
-
-// UpdateSubscriptionUsage 更新订阅用量缓存（同步调用）
-func (s *BillingCacheService) UpdateSubscriptionUsage(ctx context.Context, userID, groupID int64, costUSD float64) error {
-	if s.cache == nil {
-		return nil
-	}
-	return s.cache.UpdateSubscriptionUsage(ctx, userID, groupID, costUSD)
-}
-
-// QueueUpdateSubscriptionUsage 异步更新订阅用量缓存
-func (s *BillingCacheService) QueueUpdateSubscriptionUsage(userID, groupID int64, costUSD float64) {
-	if s.cache == nil {
-		return
-	}
-	// 队列满时同步回退，确保订阅用量及时更新。
 	if s.enqueueCacheWrite(cacheWriteTask{
-		kind:    cacheWriteUpdateSubscriptionUsage,
-		userID:  userID,
-		groupID: groupID,
-		amount:  costUSD,
+		kind:             cacheWriteSetSubscription,
+		userID:           userID,
+		groupID:          groupID,
+		subscriptionData: data,
 	}) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), cacheWriteTimeout)
 	defer cancel()
-	if err := s.UpdateSubscriptionUsage(ctx, userID, groupID, costUSD); err != nil {
-		logger.LegacyPrintf("service.billing_cache", "Warning: update subscription cache fallback failed for user %d group %d: %v", userID, groupID, err)
+	if err := s.StoreSubscriptionSnapshot(ctx, userID, groupID, data); err != nil {
+		logger.LegacyPrintf("service.billing_cache", "Warning: set subscription cache fallback failed for user %d group %d: %v", userID, groupID, err)
 	}
 }
 
-// InvalidateSubscription 失效指定订阅缓存
+// InvalidateSubscription refreshes the current subscription from the database.
+// Publishing the post-commit revision keeps delayed cache writers behind the
+// database state. Missing subscriptions still use deletion as a cache miss.
 func (s *BillingCacheService) InvalidateSubscription(ctx context.Context, userID, groupID int64) error {
 	if s.cache == nil {
 		return nil
+	}
+	if s.subRepo != nil {
+		data, err := s.getCurrentSubscriptionFromDB(ctx, userID, groupID)
+		if err == nil {
+			return s.StoreSubscriptionSnapshot(ctx, userID, groupID, data)
+		}
+		if !errors.Is(err, ErrSubscriptionNotFound) {
+			return err
+		}
 	}
 	if err := s.cache.InvalidateSubscriptionCache(ctx, userID, groupID); err != nil {
 		logger.LegacyPrintf("service.billing_cache", "Warning: invalidate subscription cache failed for user %d group %d: %v", userID, groupID, err)

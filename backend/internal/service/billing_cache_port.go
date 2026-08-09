@@ -4,7 +4,8 @@ import (
 	"time"
 )
 
-// SubscriptionCacheData represents cached subscription data
+// SubscriptionCacheData is an exact post-commit subscription snapshot.
+// Version is the database-backed monotonic cache_revision, not a timestamp.
 type SubscriptionCacheData struct {
 	Status       string
 	ExpiresAt    time.Time

@@ -70,5 +70,16 @@ declare module 'vue-router' {
      * i18n key for the page description
      */
     descriptionKey?: string
+
+    /** Whether search engines may index this route. Defaults to false. */
+    seoIndex?: boolean
+
+    /** Canonical path on the production SEO origin. */
+    canonicalPath?: string
+
+    /** i18n keys used for search and social metadata. */
+    seoTitleKey?: string
+    seoDescriptionKey?: string
+    seoKeywordsKey?: string
   }
 }

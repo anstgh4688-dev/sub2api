@@ -32,7 +32,18 @@ func (r *revokeCacheUserSubRepoStub) Delete(_ context.Context, id int64) error {
 		return ErrSubscriptionNotFound
 	}
 	r.deleted = true
+	deletedAt := time.Now()
+	r.sub.DeletedAt = &deletedAt
+	r.sub.CacheRevision++
 	return nil
+}
+
+func (r *revokeCacheUserSubRepoStub) GetByIDIncludeDeleted(_ context.Context, id int64) (*UserSubscription, error) {
+	if r.sub == nil || r.sub.ID != id {
+		return nil, ErrSubscriptionNotFound
+	}
+	cp := *r.sub
+	return &cp, nil
 }
 
 func (r *revokeCacheUserSubRepoStub) GetActiveByUserIDAndGroupID(_ context.Context, userID, groupID int64) (*UserSubscription, error) {
@@ -73,6 +84,33 @@ func TestRevokeSubscription_InvalidatesL1CacheSynchronously(t *testing.T) {
 	_, err = svc.GetActiveSubscription(context.Background(), 10, 20)
 	require.ErrorIs(t, err, ErrSubscriptionNotFound)
 	require.Equal(t, 2, repo.getActiveCalls, "撤销后应回源确认订阅已不存在，不能命中旧 L1")
+}
+
+func TestRevokeSubscription_PublishesRevisionedRevokedSnapshot(t *testing.T) {
+	repo := &revokeCacheUserSubRepoStub{
+		sub: &UserSubscription{
+			ID:            1,
+			UserID:        10,
+			GroupID:       20,
+			Status:        SubscriptionStatusActive,
+			ExpiresAt:     time.Now().Add(time.Hour),
+			CacheRevision: 7,
+		},
+	}
+	cache := &billingCacheWorkerStub{}
+	billing := NewBillingCacheService(cache, nil, repo, nil, nil, nil, &config.Config{}, nil)
+	t.Cleanup(billing.Stop)
+	svc := NewSubscriptionService(groupRepoNoop{}, repo, billing, nil, nil)
+	t.Cleanup(svc.Stop)
+
+	require.NoError(t, svc.RevokeSubscription(context.Background(), 1))
+
+	cache.mu.Lock()
+	snapshot := cache.lastSubscription
+	cache.mu.Unlock()
+	require.NotNil(t, snapshot)
+	require.Equal(t, SubscriptionStatusRevoked, snapshot.Status)
+	require.Equal(t, int64(8), snapshot.Version)
 }
 
 type restoreUserSubRepoStub struct {

@@ -250,6 +250,27 @@ func (_u *UserSubscriptionUpdate) AddMonthlyUsageUsd(v float64) *UserSubscriptio
 	return _u
 }
 
+// SetCacheRevision sets the "cache_revision" field.
+func (_u *UserSubscriptionUpdate) SetCacheRevision(v int64) *UserSubscriptionUpdate {
+	_u.mutation.ResetCacheRevision()
+	_u.mutation.SetCacheRevision(v)
+	return _u
+}
+
+// SetNillableCacheRevision sets the "cache_revision" field if the given value is not nil.
+func (_u *UserSubscriptionUpdate) SetNillableCacheRevision(v *int64) *UserSubscriptionUpdate {
+	if v != nil {
+		_u.SetCacheRevision(*v)
+	}
+	return _u
+}
+
+// AddCacheRevision adds value to the "cache_revision" field.
+func (_u *UserSubscriptionUpdate) AddCacheRevision(v int64) *UserSubscriptionUpdate {
+	_u.mutation.AddCacheRevision(v)
+	return _u
+}
+
 // SetAssignedBy sets the "assigned_by" field.
 func (_u *UserSubscriptionUpdate) SetAssignedBy(v int64) *UserSubscriptionUpdate {
 	_u.mutation.SetAssignedBy(v)
@@ -515,6 +536,12 @@ func (_u *UserSubscriptionUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if value, ok := _u.mutation.AddedMonthlyUsageUsd(); ok {
 		_spec.AddField(usersubscription.FieldMonthlyUsageUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.CacheRevision(); ok {
+		_spec.SetField(usersubscription.FieldCacheRevision, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedCacheRevision(); ok {
+		_spec.AddField(usersubscription.FieldCacheRevision, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AssignedAt(); ok {
 		_spec.SetField(usersubscription.FieldAssignedAt, field.TypeTime, value)
@@ -896,6 +923,27 @@ func (_u *UserSubscriptionUpdateOne) AddMonthlyUsageUsd(v float64) *UserSubscrip
 	return _u
 }
 
+// SetCacheRevision sets the "cache_revision" field.
+func (_u *UserSubscriptionUpdateOne) SetCacheRevision(v int64) *UserSubscriptionUpdateOne {
+	_u.mutation.ResetCacheRevision()
+	_u.mutation.SetCacheRevision(v)
+	return _u
+}
+
+// SetNillableCacheRevision sets the "cache_revision" field if the given value is not nil.
+func (_u *UserSubscriptionUpdateOne) SetNillableCacheRevision(v *int64) *UserSubscriptionUpdateOne {
+	if v != nil {
+		_u.SetCacheRevision(*v)
+	}
+	return _u
+}
+
+// AddCacheRevision adds value to the "cache_revision" field.
+func (_u *UserSubscriptionUpdateOne) AddCacheRevision(v int64) *UserSubscriptionUpdateOne {
+	_u.mutation.AddCacheRevision(v)
+	return _u
+}
+
 // SetAssignedBy sets the "assigned_by" field.
 func (_u *UserSubscriptionUpdateOne) SetAssignedBy(v int64) *UserSubscriptionUpdateOne {
 	_u.mutation.SetAssignedBy(v)
@@ -1191,6 +1239,12 @@ func (_u *UserSubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *UserSu
 	}
 	if value, ok := _u.mutation.AddedMonthlyUsageUsd(); ok {
 		_spec.AddField(usersubscription.FieldMonthlyUsageUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.CacheRevision(); ok {
+		_spec.SetField(usersubscription.FieldCacheRevision, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedCacheRevision(); ok {
+		_spec.AddField(usersubscription.FieldCacheRevision, field.TypeInt64, value)
 	}
 	if value, ok := _u.mutation.AssignedAt(); ok {
 		_spec.SetField(usersubscription.FieldAssignedAt, field.TypeTime, value)

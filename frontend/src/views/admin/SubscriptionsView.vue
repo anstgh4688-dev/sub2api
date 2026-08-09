@@ -429,8 +429,8 @@
               <button
                 v-if="row.status === 'active'"
                 @click="handleResetQuota(row)"
-                :disabled="resettingQuota && resettingSubscription?.id === row.id"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20 dark:hover:text-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
+                data-test="reset-quota-open"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20 dark:hover:text-orange-400"
               >
                 <Icon name="refresh" size="sm" />
                 <span class="text-xs">{{ t('admin.subscriptions.resetQuota') }}</span>
@@ -747,15 +747,11 @@
       @cancel="showRestoreDialog = false"
     />
 
-    <!-- Reset Quota Confirmation Dialog -->
-    <ConfirmDialog
+    <SubscriptionQuotaResetDialog
       :show="showResetQuotaConfirm"
-      :title="t('admin.subscriptions.resetQuotaTitle')"
-      :message="t('admin.subscriptions.resetQuotaConfirm', { user: resettingSubscription?.user?.email })"
-      :confirm-text="t('admin.subscriptions.resetQuota')"
-      :cancel-text="t('common.cancel')"
-      @confirm="confirmResetQuota"
-      @cancel="showResetQuotaConfirm = false"
+      :subscription="resettingSubscription"
+      @close="closeResetQuotaDialog"
+      @reset="handleQuotaResetSuccess"
     />
     <!-- Subscription Guide Modal -->
     <teleport to="body">
@@ -863,6 +859,7 @@ import Select from '@/components/common/Select.vue'
 import GroupBadge from '@/components/common/GroupBadge.vue'
 import GroupOptionItem from '@/components/common/GroupOptionItem.vue'
 import Icon from '@/components/icons/Icon.vue'
+import SubscriptionQuotaResetDialog from '@/components/admin/subscription/SubscriptionQuotaResetDialog.vue'
 import {
   getRemainingDurationParts,
   getRemainingExpiryDuration,
@@ -1088,7 +1085,6 @@ const showRestoreDialog = ref(false)
 const showResetQuotaConfirm = ref(false)
 const submitting = ref(false)
 const resettingSubscription = ref<UserSubscription | null>(null)
-const resettingQuota = ref(false)
 const extendingSubscription = ref<UserSubscription | null>(null)
 const revokingSubscription = ref<UserSubscription | null>(null)
 const restoringSubscription = ref<UserSubscription | null>(null)
@@ -1474,22 +1470,13 @@ const handleResetQuota = (subscription: UserSubscription) => {
   showResetQuotaConfirm.value = true
 }
 
-const confirmResetQuota = async () => {
-  if (!resettingSubscription.value) return
-  if (resettingQuota.value) return
-  resettingQuota.value = true
-  try {
-    await adminAPI.subscriptions.resetQuota(resettingSubscription.value.id, { daily: true, weekly: true, monthly: true })
-    appStore.showSuccess(t('admin.subscriptions.quotaResetSuccess'))
-    showResetQuotaConfirm.value = false
-    resettingSubscription.value = null
-    await loadSubscriptions()
-  } catch (error: any) {
-    appStore.showError(error.response?.data?.detail || t('admin.subscriptions.failedToResetQuota'))
-    console.error('Error resetting quota:', error)
-  } finally {
-    resettingQuota.value = false
-  }
+const closeResetQuotaDialog = () => {
+  showResetQuotaConfirm.value = false
+  resettingSubscription.value = null
+}
+
+const handleQuotaResetSuccess = async () => {
+  await loadSubscriptions()
 }
 
 // Helper functions
