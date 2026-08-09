@@ -24,6 +24,7 @@ import (
 const (
 	// NonceHTMLPlaceholder is the placeholder for nonce in HTML script tags
 	NonceHTMLPlaceholder = "__CSP_NONCE_VALUE__"
+	frontendNoIndexValue = "noindex, nofollow, noarchive"
 )
 
 //go:embed all:dist
@@ -101,6 +102,7 @@ func (s *FrontendServer) Middleware() gin.HandlerFunc {
 
 		// For index.html or SPA routes, serve with injected settings
 		if cleanPath == "index.html" || !s.fileExists(cleanPath) {
+			applyFrontendIndexingHeader(c, path)
 			s.serveIndexHTML(c)
 			return
 		}
@@ -173,7 +175,7 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 	settings, err := s.settings.GetPublicSettingsForInjection(ctx)
 	if err != nil {
 		// Fallback: serve without injection
-		c.Data(http.StatusOK, "text/html; charset=utf-8", s.baseHTML)
+		c.Data(http.StatusOK, "text/html; charset=utf-8", replaceNoncePlaceholder(s.baseHTML, nonce))
 		c.Abort()
 		return
 	}
@@ -181,7 +183,7 @@ func (s *FrontendServer) serveIndexHTML(c *gin.Context) {
 	settingsJSON, err := json.Marshal(settings)
 	if err != nil {
 		// Fallback: serve without injection
-		c.Data(http.StatusOK, "text/html; charset=utf-8", s.baseHTML)
+		c.Data(http.StatusOK, "text/html; charset=utf-8", replaceNoncePlaceholder(s.baseHTML, nonce))
 		c.Abort()
 		return
 	}
@@ -285,7 +287,7 @@ func injectSiteTitle(html, settingsJSON []byte) []byte {
 		return html
 	}
 
-	newTitle := []byte("<title>" + htmlpkg.EscapeString(cfg.SiteName) + " - AI API Gateway</title>")
+	newTitle := []byte("<title>" + htmlpkg.EscapeString(cfg.SiteName) + " - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>")
 	var buf bytes.Buffer
 	buf.Write(html[:titleStart])
 	buf.Write(newTitle)
@@ -323,6 +325,9 @@ func ServeEmbeddedFrontend() gin.HandlerFunc {
 
 		if file, err := distFS.Open(cleanPath); err == nil {
 			_ = file.Close()
+			if cleanPath == "index.html" {
+				applyFrontendIndexingHeader(c, path)
+			}
 			// Try local override first
 			if tryServeOverrideFile(c, overrideDir, cleanPath) {
 				return
@@ -333,6 +338,7 @@ func ServeEmbeddedFrontend() gin.HandlerFunc {
 			return
 		}
 
+		applyFrontendIndexingHeader(c, path)
 		serveIndexHTML(c, distFS)
 	}
 }
@@ -367,6 +373,17 @@ func shouldBypassEmbeddedFrontend(path string) bool {
 		trimmed == "/alpha/search" ||
 		strings.HasPrefix(trimmed, "/images/") ||
 		strings.HasPrefix(trimmed, "/videos/")
+}
+
+func applyFrontendIndexingHeader(c *gin.Context, path string) {
+	if !shouldIndexFrontendPath(path) {
+		c.Header("X-Robots-Tag", frontendNoIndexValue)
+	}
+}
+
+func shouldIndexFrontendPath(path string) bool {
+	normalized := strings.TrimRight(strings.TrimSpace(path), "/")
+	return normalized == "" || normalized == "/home"
 }
 
 func serveIndexHTML(c *gin.Context, fsys fs.FS) {

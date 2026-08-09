@@ -5,6 +5,13 @@ export default {
   },
   // Home Page
   home: {
+    seo: {
+      title: 'AI API 中转与 Claude、GPT、Gemini 多模型统一网关',
+      description: 'Sub2API 提供 Claude、GPT、Gemini 等主流模型的统一 AI API 接入，自建官方订阅号池，支持国内直连、智能调度、会话保持、实时监控与按量计费。',
+      keywords: 'AI API,AI API 中转,Claude API,GPT API,Gemini API,API 网关,大模型 API,国内直连,Sub2API'
+    },
+    navigation: '首页导航',
+    capabilities: '平台能力',
     viewOnGithub: '在 GitHub 上查看',
     viewDocs: '查看文档',
     docs: '文档',
@@ -14,13 +21,84 @@ export default {
     login: '登录',
     getStarted: '立即开始',
     goToDashboard: '进入控制台',
-    // 新增：面向用户的价值主张
-    heroSubtitle: '一个密钥，畅用多个 AI 模型',
-    heroDescription: '无需管理多个订阅账号，一站式接入 Claude、GPT、Gemini 等主流 AI 服务',
+    // 首页 H1：价值主张（站点名称在导航栏和 hero eyebrow 中展示）
+    heroHeadline: '一个密钥，畅用多个 AI 模型',
+    heroDescription: '平台自建自营官方订阅号池，一个密钥直连 Claude、GPT、Gemini 等主流模型。国内免代理、智能调度、实时监控，稳定看得见。',
+    poolBadge: '自建号池 · 官方正规订阅',
+    directBadge: '国内直连 · 免代理',
+    stats: {
+      selfOperated: '号池自建自营',
+      platforms: '主流平台接入',
+      monitoring: '全天候健康监测',
+      failover: '秒级故障转移'
+    },
     tags: {
       subscriptionToApi: '订阅转 API',
+      selfHostedPool: '自建号池',
       stickySession: '会话保持',
       realtimeBilling: '按量计费'
+    },
+    // 自建号池区块
+    pool: {
+      title: '自建号池，稳定可控',
+      subtitle: '所有上游账号均为平台自建自营的官方订阅——非公共拼车、非二手转售。来源可控，质量可靠，用得放心。',
+      caption: '号池节点实时在线 · 全部自建自营',
+      features: {
+        owned: {
+          title: '官方订阅 · 自建自营',
+          desc: '号池内全部为平台直接注册并维护的官方订阅账号，来源透明，杜绝共享账号与黑卡风险'
+        },
+        monitor: {
+          title: '实时健康监测',
+          desc: '7×24 监控每个账号的可用性与配额状态，异常账号秒级熔断下线，请求无感切换'
+        },
+        schedule: {
+          title: '智能调度 · 会话保持',
+          desc: '按负载与健康度智能分配请求，同一会话自动路由到相同账号，上下文连续不断档'
+        },
+        scale: {
+          title: '弹性扩容',
+          desc: '号池规模随负载动态扩展，高峰期自动补充产能，告别限流与排队'
+        }
+      }
+    },
+    // 国内直连区块
+    direct: {
+      title: '国内直连，免代理即开即用',
+      subtitle: '优化线路直连官方服务，无需 VPN、无需镜像。官方客户端与 SDK 填入地址和密钥即可使用，体验与官方一致。',
+      features: {
+        noProxy: {
+          title: '免代理直连',
+          desc: '无需 VPN 与镜像站，网络环境零要求，打开官方客户端填入密钥即可直连调用'
+        },
+        bgp: {
+          title: '多线 BGP 优化',
+          desc: '电信 / 联通 / 移动三网优化接入，自动选择最优路径，跨网低延迟不绕路'
+        },
+        clients: {
+          title: '全客户端即插即用',
+          desc: 'Claude Code、Codex、Gemini CLI、Cursor 等官方工具零改造接入，满血不降智'
+        }
+      }
+    },
+    // 快速开始步骤
+    steps: {
+      title: '三步接入',
+      subtitle: '从注册到发起第一个请求，只需几分钟',
+      items: {
+        key: {
+          title: '创建 API 密钥',
+          desc: '注册账号，在控制台一键生成专属密钥'
+        },
+        call: {
+          title: '调用统一接口',
+          desc: '将密钥填入任意兼容客户端或 SDK，无需改动业务代码'
+        },
+        route: {
+          title: '号池智能调度',
+          desc: '请求自动路由至最健康的自建账号，稳定返回结果'
+        }
+      }
     },
     // 用户痛点区块
     painPoints: {
@@ -46,8 +124,8 @@ export default {
     },
     // 解决方案区块
     solutions: {
-      title: '我们帮你解决',
-      subtitle: '简单三步，开始省心使用 AI'
+      title: '核心能力',
+      subtitle: '稳定、可控、透明的 AI 流量控制平面'
     },
     features: {
       unifiedGateway: '一键接入',
@@ -110,7 +188,8 @@ export default {
       button: '免费注册'
     },
     footer: {
-      allRightsReserved: '保留所有权利。'
+      allRightsReserved: '保留所有权利。',
+      links: '页脚链接'
     }
   },
 

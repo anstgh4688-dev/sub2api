@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /v1/
+Disallow: /v1beta/
+Disallow: /backend-api/
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /setup
+Disallow: /login
+Disallow: /register
+Disallow: /dashboard
+Disallow: /keys
+Disallow: /usage
+Disallow: /profile
+Disallow: /orders
+Disallow: /purchase
+Disallow: /payment/
+Disallow: /subscriptions
+
+Sitemap: https://ai.myrt.cc/sitemap.xml

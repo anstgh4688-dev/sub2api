@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
@@ -20,7 +21,39 @@ const (
 	captureBatchImageHoldSQL    = `(?s)UPDATE users\s+SET balance = balance\s+\+ CASE WHEN \$1 > \$2 THEN \$1 - \$2 ELSE 0 END\s+- CASE WHEN \$2 > \$1 THEN \$2 - \$1 ELSE 0 END,\s+frozen_balance = COALESCE\(frozen_balance, 0\) - \$1,\s+updated_at = NOW\(\)\s+WHERE id = \$3 AND deleted_at IS NULL AND COALESCE\(frozen_balance, 0\) >= \$1\s+RETURNING balance, frozen_balance`
 	releaseBatchImageHoldSQL    = `(?s)UPDATE users\s+SET balance = balance \+ \$1,\s+frozen_balance = COALESCE\(frozen_balance, 0\) - \$1,\s+updated_at = NOW\(\)\s+WHERE id = \$2 AND deleted_at IS NULL AND COALESCE\(frozen_balance, 0\) >= \$1\s+RETURNING balance, frozen_balance`
 	userExistsForBillingSQL     = `(?s)SELECT 1\s+FROM users\s+WHERE id = \$1 AND deleted_at IS NULL`
+	subscriptionUsageUpdateSQL  = `(?s)UPDATE user_subscriptions us\s+SET\s+daily_usage_usd = us.daily_usage_usd \+ \$1,\s+weekly_usage_usd = us.weekly_usage_usd \+ \$1,\s+monthly_usage_usd = us.monthly_usage_usd \+ \$1,\s+updated_at = NOW\(\).*RETURNING\s+us.status,\s+us.expires_at,\s+us.daily_usage_usd,\s+us.weekly_usage_usd,\s+us.monthly_usage_usd,\s+us.cache_revision`
 )
+
+func TestIncrementUsageBillingSubscription_ReturnsPostCommitCacheSnapshot(t *testing.T) {
+	ctx := context.Background()
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+	defer func() { _ = db.Close() }()
+
+	expiresAt := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	mock.ExpectBegin()
+	tx, err := db.BeginTx(ctx, nil)
+	require.NoError(t, err)
+	mock.ExpectQuery(subscriptionUsageUpdateSQL).
+		WithArgs(2.5, int64(42)).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"status", "expires_at", "daily_usage_usd", "weekly_usage_usd", "monthly_usage_usd", "cache_revision",
+		}).AddRow(service.SubscriptionStatusActive, expiresAt, 3.5, 12.5, 32.5, int64(17)))
+	mock.ExpectCommit()
+
+	snapshot, err := incrementUsageBillingSubscription(ctx, tx, 42, 2.5)
+	require.NoError(t, err)
+	require.Equal(t, &service.SubscriptionCacheData{
+		Status:       service.SubscriptionStatusActive,
+		ExpiresAt:    expiresAt,
+		DailyUsage:   3.5,
+		WeeklyUsage:  12.5,
+		MonthlyUsage: 32.5,
+		Version:      17,
+	}, snapshot)
+	require.NoError(t, tx.Commit())
+	require.NoError(t, mock.ExpectationsWereMet())
+}
 
 func TestDeductUsageBillingBalance_UsesSufficientBalanceGuard(t *testing.T) {
 	ctx := context.Background()

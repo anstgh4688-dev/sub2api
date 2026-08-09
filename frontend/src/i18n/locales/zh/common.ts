@@ -181,6 +181,7 @@ export default {
     availableChannels: '可用渠道',
     modelPlaza: '模型广场',
     subscriptions: '订阅管理',
+    subscriptionQuotaReset: '限额重置',
     accounts: '账号管理',
     plugins: '插件管理',
     proxies: 'IP管理',
