@@ -5,7 +5,7 @@
     <span class="starfield starfield--near"></span>
     <span class="starfield starfield--far"></span>
     <span
-      v-for="meteor in meteors"
+      v-for="meteor in activeMeteors"
       :key="meteor.id"
       class="meteor"
       :style="{
@@ -21,11 +21,17 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 // Shared cosmic backdrop: milky-way band, twinkling starfields and shooting
 // stars. Dark-theme only for the galaxy/meteors; the starfields stay faintly
 // visible in light mode. Use `fixed` when the parent has no positioned
-// full-height container (e.g. the console layout).
-withDefaults(defineProps<{ fixed?: boolean }>(), { fixed: false })
+// full-height container (e.g. the console layout). Use `subtle` for
+// content-dense pages (console) — fewer meteors on longer periods.
+const props = withDefaults(defineProps<{ fixed?: boolean; subtle?: boolean }>(), {
+  fixed: false,
+  subtle: false
+})
 
 // Each streak falls top-right → bottom-left along its own angle, on an
 // independent period so they never sync.
@@ -43,6 +49,16 @@ const meteors = [
   { id: 11, top: '16%', left: '48%', angle: -40, length: 180, period: '9.8s', delay: '8.5s' },
   { id: 12, top: '90%', left: '84%', angle: -45, length: 130, period: '7.9s', delay: '2.8s' }
 ] as const
+
+// Sparse variant for the console: 4 streaks, ~2.5x longer periods.
+const meteorsSubtle = [
+  { id: 1, top: '8%', left: '62%', angle: -38, length: 220, period: '14s', delay: '1.2s' },
+  { id: 2, top: '26%', left: '86%', angle: -43, length: 160, period: '19s', delay: '6.5s' },
+  { id: 3, top: '52%', left: '72%', angle: -36, length: 200, period: '16s', delay: '10.8s' },
+  { id: 4, top: '78%', left: '82%', angle: -41, length: 150, period: '22s', delay: '4.3s' }
+] as const
+
+const activeMeteors = computed(() => (props.subtle ? meteorsSubtle : meteors))
 </script>
 
 <style scoped>
