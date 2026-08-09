@@ -181,6 +181,7 @@ export default {
     availableChannels: 'Available Channels',
     modelPlaza: 'Model Plaza',
     subscriptions: 'Subscriptions',
+    subscriptionQuotaReset: 'Quota Reset',
     accounts: 'Accounts',
     plugins: 'Plugins',
     proxies: 'Proxies',

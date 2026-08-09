@@ -9,6 +9,8 @@ import AnnouncementPopup from '@/components/common/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
 import { getSetupStatus } from '@/api/setup'
 import { updateFavicon } from '@/utils/branding'
+import { applyRouteSeo } from '@/utils/seo'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
 const route = useRoute()
@@ -18,13 +20,22 @@ const subscriptionStore = useSubscriptionStore()
 const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
+const { locale, t } = useI18n()
 
-function updateDocumentTitle() {
+function updateDocumentMetadata() {
   const customMenuItems = [
     ...(appStore.cachedPublicSettings?.custom_menu_items ?? []),
     ...(authStore.isAdmin ? adminSettingsStore.customMenuItems : []),
   ]
-  document.title = resolveRouteDocumentTitle(route, appStore.siteName, customMenuItems)
+  applyRouteSeo({
+    route,
+    fallbackTitle: resolveRouteDocumentTitle(route, appStore.siteName, customMenuItems),
+    siteName: appStore.siteName,
+    siteLogo: appStore.siteLogo,
+    siteSubtitle: appStore.cachedPublicSettings?.site_subtitle,
+    locale: locale.value,
+    translate: t,
+  })
 }
 
 // Watch for site settings changes and update favicon/title
@@ -47,8 +58,9 @@ watch(
     () => appStore.cachedPublicSettings?.custom_menu_items,
     () => authStore.isAdmin,
     () => adminSettingsStore.customMenuItems,
+    () => locale.value,
   ],
-  updateDocumentTitle,
+  updateDocumentMetadata,
   { deep: true }
 )
 
@@ -132,7 +144,7 @@ onMounted(async () => {
   await appStore.fetchPublicSettings()
 
   // Re-resolve document title now that site settings are available
-  updateDocumentTitle()
+  updateDocumentMetadata()
 })
 </script>
 

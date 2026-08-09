@@ -32,6 +32,8 @@ type UserSubscription struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt *time.Time
+	// CacheRevision orders Redis snapshots and is never derived from wall-clock time.
+	CacheRevision int64
 
 	User           *User
 	Group          *Group

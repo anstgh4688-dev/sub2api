@@ -30,7 +30,7 @@ func TestInjectSiteTitle(t *testing.T) {
 
 		result := injectSiteTitle(html, settingsJSON)
 
-		assert.Contains(t, string(result), "<title>MyCustomSite - AI API Gateway</title>")
+		assert.Contains(t, string(result), "<title>MyCustomSite - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>")
 		assert.NotContains(t, string(result), "Sub2API")
 	})
 
@@ -98,7 +98,7 @@ func TestInjectSiteTitle(t *testing.T) {
 
 		result := injectSiteTitle(html, settingsJSON)
 
-		assert.Contains(t, string(result), "<title>A&amp;B - AI API Gateway</title>")
+		assert.Contains(t, string(result), "<title>A&amp;B - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>")
 	})
 
 	t.Run("preserves_rest_of_html", func(t *testing.T) {
@@ -110,7 +110,7 @@ func TestInjectSiteTitle(t *testing.T) {
 		assert.Contains(t, string(result), `<meta charset="UTF-8">`)
 		assert.Contains(t, string(result), `<script src="app.js"></script>`)
 		assert.Contains(t, string(result), `<div id="app"></div>`)
-		assert.Contains(t, string(result), "<title>TestSite - AI API Gateway</title>")
+		assert.Contains(t, string(result), "<title>TestSite - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>")
 	})
 }
 
@@ -424,6 +424,8 @@ func TestFrontendServer_ServeIndexHTML(t *testing.T) {
 		// Should still return 200 with base HTML
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
+		assert.NotContains(t, w.Body.String(), NonceHTMLPlaceholder)
+		assert.Contains(t, w.Body.String(), `nonce="nonce123"`)
 	})
 }
 
@@ -633,6 +635,11 @@ func TestFrontendServer_Middleware(t *testing.T) {
 
 				assert.Equal(t, http.StatusOK, w.Code)
 				assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
+				if shouldIndexFrontendPath(path) {
+					assert.Empty(t, w.Header().Get("X-Robots-Tag"))
+				} else {
+					assert.Equal(t, frontendNoIndexValue, w.Header().Get("X-Robots-Tag"))
+				}
 			})
 		}
 	})
@@ -650,11 +657,11 @@ func TestFrontendServer_Middleware(t *testing.T) {
 
 		// Request for existing static file
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/logo.png", nil)
+		req := httptest.NewRequest(http.MethodGet, "/logo.svg", nil)
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Contains(t, w.Header().Get("Content-Type"), "image/png")
+		assert.Contains(t, w.Header().Get("Content-Type"), "image/svg+xml")
 		assert.Empty(t, w.Header().Get("Cache-Control"))
 
 		entries, err := fs.ReadDir(server.distFS, "assets")
@@ -676,6 +683,48 @@ func TestFrontendServer_Middleware(t *testing.T) {
 		assert.Equal(t, http.StatusOK, assetWriter.Code)
 		assert.Equal(t, staticAssetsCacheControl, assetWriter.Header().Get("Cache-Control"))
 	})
+
+	t.Run("serves_search_engine_discovery_files", func(t *testing.T) {
+		provider := &mockSettingsProvider{settings: map[string]string{"test": "value"}}
+		server, err := NewFrontendServer(provider)
+		require.NoError(t, err)
+
+		router := gin.New()
+		router.Use(server.Middleware())
+
+		checks := []struct {
+			path        string
+			contentType string
+			body        string
+		}{
+			{path: "/robots.txt", contentType: "text/plain", body: "Sitemap: https://ai.myrt.cc/sitemap.xml"},
+			{path: "/sitemap.xml", contentType: "xml", body: "<loc>https://ai.myrt.cc/</loc>"},
+			{path: "/2dc46cc25defb40506e815a9fe647050.txt", contentType: "text/plain", body: "2dc46cc25defb40506e815a9fe647050"},
+		}
+
+		for _, check := range checks {
+			t.Run(check.path, func(t *testing.T) {
+				w := httptest.NewRecorder()
+				req := httptest.NewRequest(http.MethodGet, check.path, nil)
+				router.ServeHTTP(w, req)
+
+				assert.Equal(t, http.StatusOK, w.Code)
+				assert.Contains(t, w.Header().Get("Content-Type"), check.contentType)
+				assert.Contains(t, w.Body.String(), check.body)
+				assert.NotContains(t, w.Header().Get("Content-Type"), "text/html")
+			})
+		}
+	})
+}
+
+func TestShouldIndexFrontendPath(t *testing.T) {
+	for _, path := range []string{"/", "/home", "/home/", " / "} {
+		assert.True(t, shouldIndexFrontendPath(path), "path=%q", path)
+	}
+
+	for _, path := range []string{"/index.html", "/login", "/dashboard", "/admin/users", "/unknown"} {
+		assert.False(t, shouldIndexFrontendPath(path), "path=%q", path)
+	}
 }
 
 func TestEmbeddedFrontendBypassesBareVideoAPIRoutes(t *testing.T) {
@@ -735,11 +784,11 @@ func TestServeEmbeddedFrontend(t *testing.T) {
 		router.Use(middleware)
 
 		w := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/logo.png", nil)
+		req := httptest.NewRequest(http.MethodGet, "/logo.svg", nil)
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Contains(t, w.Header().Get("Content-Type"), "image/png")
+		assert.Contains(t, w.Header().Get("Content-Type"), "image/svg+xml")
 	})
 
 	t.Run("serves_index_html_for_root", func(t *testing.T) {

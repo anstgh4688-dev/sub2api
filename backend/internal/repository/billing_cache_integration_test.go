@@ -146,20 +146,6 @@ func (s *BillingCacheSuite) TestSubscriptionCache() {
 			},
 		},
 		{
-			name: "update_usage_on_nonexistent_is_noop",
-			fn: func(ctx context.Context, rdb *redis.Client, cache service.BillingCache) {
-				userID := int64(11)
-				groupID := int64(21)
-				subKey := fmt.Sprintf("%s%d:%d", billingSubKeyPrefix, userID, groupID)
-
-				require.NoError(s.T(), cache.UpdateSubscriptionUsage(ctx, userID, groupID, 1.0), "UpdateSubscriptionUsage should not error")
-
-				exists, err := rdb.Exists(ctx, subKey).Result()
-				require.NoError(s.T(), err, "Exists")
-				require.Equal(s.T(), int64(0), exists, "expected missing subscription key after UpdateSubscriptionUsage on non-existent")
-			},
-		},
-		{
 			name: "set_and_get_with_ttl",
 			fn: func(ctx context.Context, rdb *redis.Client, cache service.BillingCache) {
 				userID := int64(12)
@@ -188,7 +174,7 @@ func (s *BillingCacheSuite) TestSubscriptionCache() {
 			},
 		},
 		{
-			name: "update_usage_increments_all_fields",
+			name: "newer_snapshot_replaces_all_usage_fields",
 			fn: func(ctx context.Context, rdb *redis.Client, cache service.BillingCache) {
 				userID := int64(13)
 				groupID := int64(23)
@@ -203,13 +189,55 @@ func (s *BillingCacheSuite) TestSubscriptionCache() {
 				}
 				require.NoError(s.T(), cache.SetSubscriptionCache(ctx, userID, groupID, data), "SetSubscriptionCache")
 
-				require.NoError(s.T(), cache.UpdateSubscriptionUsage(ctx, userID, groupID, 0.5), "UpdateSubscriptionUsage")
+				require.NoError(s.T(), cache.SetSubscriptionCache(ctx, userID, groupID, &service.SubscriptionCacheData{
+					Status:       "active",
+					ExpiresAt:    data.ExpiresAt,
+					DailyUsage:   1.5,
+					WeeklyUsage:  2.5,
+					MonthlyUsage: 3.5,
+					Version:      2,
+				}), "SetSubscriptionCache newer snapshot")
 
 				gotSub, err := cache.GetSubscriptionCache(ctx, userID, groupID)
 				require.NoError(s.T(), err, "GetSubscriptionCache after update")
 				require.Equal(s.T(), 1.5, gotSub.DailyUsage)
 				require.Equal(s.T(), 2.5, gotSub.WeeklyUsage)
 				require.Equal(s.T(), 3.5, gotSub.MonthlyUsage)
+				require.Equal(s.T(), int64(2), gotSub.Version)
+			},
+		},
+		{
+			name: "older_subscription_snapshot_does_not_overwrite_newer_revision",
+			fn: func(ctx context.Context, rdb *redis.Client, cache service.BillingCache) {
+				userID := int64(14)
+				groupID := int64(24)
+
+				resetSnapshot := &service.SubscriptionCacheData{
+					Status:       "active",
+					ExpiresAt:    time.Now().Add(1 * time.Hour),
+					DailyUsage:   0,
+					WeeklyUsage:  13,
+					MonthlyUsage: 33,
+					Version:      2,
+				}
+				delayedOldSnapshot := &service.SubscriptionCacheData{
+					Status:       "active",
+					ExpiresAt:    resetSnapshot.ExpiresAt,
+					DailyUsage:   5,
+					WeeklyUsage:  13,
+					MonthlyUsage: 33,
+					Version:      1,
+				}
+
+				require.NoError(s.T(), cache.SetSubscriptionCache(ctx, userID, groupID, resetSnapshot))
+				require.NoError(s.T(), cache.SetSubscriptionCache(ctx, userID, groupID, delayedOldSnapshot))
+
+				gotSub, err := cache.GetSubscriptionCache(ctx, userID, groupID)
+				require.NoError(s.T(), err)
+				require.Equal(s.T(), int64(2), gotSub.Version)
+				require.InDelta(s.T(), 0, gotSub.DailyUsage, 1e-9)
+				require.InDelta(s.T(), 13, gotSub.WeeklyUsage, 1e-9)
+				require.InDelta(s.T(), 33, gotSub.MonthlyUsage, 1e-9)
 			},
 		},
 		{
@@ -330,18 +358,8 @@ func (s *BillingCacheSuite) TestDeductUserBalance_ErrorPropagation() {
 	}
 }
 
-// TestUpdateSubscriptionUsage_ErrorPropagation 验证 P2-12 修复：
-// Redis 真实错误应传播，key 不存在（redis.Nil）应返回 nil。
-func (s *BillingCacheSuite) TestUpdateSubscriptionUsage_ErrorPropagation() {
-	s.Run("key_not_exists_returns_nil", func() {
-		rdb := testRedis(s.T())
-		cache := NewBillingCache(rdb)
-		ctx := context.Background()
-
-		err := cache.UpdateSubscriptionUsage(ctx, 88888, 77777, 1.0)
-		require.NoError(s.T(), err, "UpdateSubscriptionUsage on non-existent key should return nil")
-	})
-
+// TestSetSubscriptionCache_ErrorPropagation verifies that real Redis errors propagate.
+func (s *BillingCacheSuite) TestSetSubscriptionCache_ErrorPropagation() {
 	s.Run("cancelled_context_propagates_error", func() {
 		rdb := testRedis(s.T())
 		cache := NewBillingCache(rdb)
@@ -357,7 +375,14 @@ func (s *BillingCacheSuite) TestUpdateSubscriptionUsage_ErrorPropagation() {
 		cancelCtx, cancel := context.WithCancel(ctx)
 		cancel()
 
-		err := cache.UpdateSubscriptionUsage(cancelCtx, 301, 401, 1.0)
+		err := cache.SetSubscriptionCache(cancelCtx, 301, 401, &service.SubscriptionCacheData{
+			Status:       "active",
+			ExpiresAt:    time.Now().Add(time.Hour),
+			DailyUsage:   1,
+			WeeklyUsage:  1,
+			MonthlyUsage: 1,
+			Version:      2,
+		})
 		require.Error(s.T(), err, "cancelled context should propagate error")
 	})
 }

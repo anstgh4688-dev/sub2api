@@ -173,9 +173,11 @@ func (r *usageBillingRepository) applyBatchImageBalanceHold(
 
 func (r *usageBillingRepository) applyUsageBillingEffects(ctx context.Context, tx *sql.Tx, cmd *service.UsageBillingCommand, result *service.UsageBillingApplyResult) error {
 	if cmd.SubscriptionCost > 0 && cmd.SubscriptionID != nil {
-		if err := incrementUsageBillingSubscription(ctx, tx, *cmd.SubscriptionID, cmd.SubscriptionCost); err != nil {
+		snapshot, err := incrementUsageBillingSubscription(ctx, tx, *cmd.SubscriptionID, cmd.SubscriptionCost)
+		if err != nil {
 			return err
 		}
+		result.SubscriptionCacheSnapshot = snapshot
 	}
 
 	if cmd.BalanceCost > 0 {
@@ -212,7 +214,7 @@ func (r *usageBillingRepository) applyUsageBillingEffects(ctx context.Context, t
 	return nil
 }
 
-func incrementUsageBillingSubscription(ctx context.Context, tx *sql.Tx, subscriptionID int64, costUSD float64) error {
+func incrementUsageBillingSubscription(ctx context.Context, tx *sql.Tx, subscriptionID int64, costUSD float64) (*service.SubscriptionCacheData, error) {
 	const updateSQL = `
 		UPDATE user_subscriptions us
 		SET
@@ -225,19 +227,30 @@ func incrementUsageBillingSubscription(ctx context.Context, tx *sql.Tx, subscrip
 			AND us.deleted_at IS NULL
 			AND us.group_id = g.id
 			AND g.deleted_at IS NULL
+		RETURNING
+			us.status,
+			us.expires_at,
+			us.daily_usage_usd,
+			us.weekly_usage_usd,
+			us.monthly_usage_usd,
+			us.cache_revision
 	`
-	res, err := tx.ExecContext(ctx, updateSQL, costUSD, subscriptionID)
+	snapshot := &service.SubscriptionCacheData{}
+	err := tx.QueryRowContext(ctx, updateSQL, costUSD, subscriptionID).Scan(
+		&snapshot.Status,
+		&snapshot.ExpiresAt,
+		&snapshot.DailyUsage,
+		&snapshot.WeeklyUsage,
+		&snapshot.MonthlyUsage,
+		&snapshot.Version,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, service.ErrSubscriptionNotFound
+	}
 	if err != nil {
-		return err
+		return nil, err
 	}
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if affected > 0 {
-		return nil
-	}
-	return service.ErrSubscriptionNotFound
+	return snapshot, nil
 }
 
 func deductUsageBillingBalance(ctx context.Context, tx *sql.Tx, userID int64, amount float64) (float64, bool, error) {

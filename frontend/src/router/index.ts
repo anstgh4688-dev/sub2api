@@ -36,7 +36,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/HomeView.vue'),
     meta: {
       requiresAuth: false,
-      title: 'Home'
+      title: 'Home',
+      seoIndex: true,
+      canonicalPath: '/',
+      seoTitleKey: 'home.seo.title',
+      seoDescriptionKey: 'home.seo.description',
+      seoKeywordsKey: 'home.seo.keywords'
     }
   },
   {
@@ -183,6 +188,16 @@ const routes: RouteRecordRaw[] = [
       requiresAuth: false,
       title: 'Model Plaza',
       titleKey: 'modelPlaza.title'
+    }
+  },
+  {
+    path: '/intelligence-radar',
+    alias: '/codex-radar',
+    name: 'IntelligenceRadar',
+    component: () => import('@/views/public/CodexRadarView.vue'),
+    meta: {
+      requiresAuth: false,
+      title: '智能雷达'
     }
   },
 
@@ -510,6 +525,17 @@ const routes: RouteRecordRaw[] = [
       title: 'Subscription Management',
       titleKey: 'admin.subscriptions.title',
       descriptionKey: 'admin.subscriptions.description'
+    }
+  },
+  {
+    path: '/admin/subscription-quota-reset',
+    name: 'AdminSubscriptionQuotaReset',
+    component: () => import('@/views/admin/SubscriptionQuotaResetView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: 'Subscription Quota Reset',
+      titleKey: 'admin.subscriptions.quotaResetPage.title'
     }
   },
   {
@@ -939,6 +965,7 @@ router.beforeEach(async (to, _from, next) => {
   if (authStore.isSimpleMode) {
     const restrictedPaths = [
       '/admin/subscriptions',
+      '/admin/subscription-quota-reset',
       '/admin/redeem',
       '/subscriptions',
       '/redeem'

@@ -125,6 +125,11 @@ func MonthlyUsageUsd(v float64) predicate.UserSubscription {
 	return predicate.UserSubscription(sql.FieldEQ(FieldMonthlyUsageUsd, v))
 }
 
+// CacheRevision applies equality check predicate on the "cache_revision" field. It's identical to CacheRevisionEQ.
+func CacheRevision(v int64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldEQ(FieldCacheRevision, v))
+}
+
 // AssignedBy applies equality check predicate on the "assigned_by" field. It's identical to AssignedByEQ.
 func AssignedBy(v int64) predicate.UserSubscription {
 	return predicate.UserSubscription(sql.FieldEQ(FieldAssignedBy, v))
@@ -723,6 +728,46 @@ func MonthlyUsageUsdLT(v float64) predicate.UserSubscription {
 // MonthlyUsageUsdLTE applies the LTE predicate on the "monthly_usage_usd" field.
 func MonthlyUsageUsdLTE(v float64) predicate.UserSubscription {
 	return predicate.UserSubscription(sql.FieldLTE(FieldMonthlyUsageUsd, v))
+}
+
+// CacheRevisionEQ applies the EQ predicate on the "cache_revision" field.
+func CacheRevisionEQ(v int64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldEQ(FieldCacheRevision, v))
+}
+
+// CacheRevisionNEQ applies the NEQ predicate on the "cache_revision" field.
+func CacheRevisionNEQ(v int64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNEQ(FieldCacheRevision, v))
+}
+
+// CacheRevisionIn applies the In predicate on the "cache_revision" field.
+func CacheRevisionIn(vs ...int64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldIn(FieldCacheRevision, vs...))
+}
+
+// CacheRevisionNotIn applies the NotIn predicate on the "cache_revision" field.
+func CacheRevisionNotIn(vs ...int64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNotIn(FieldCacheRevision, vs...))
+}
+
+// CacheRevisionGT applies the GT predicate on the "cache_revision" field.
+func CacheRevisionGT(v int64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldGT(FieldCacheRevision, v))
+}
+
+// CacheRevisionGTE applies the GTE predicate on the "cache_revision" field.
+func CacheRevisionGTE(v int64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldGTE(FieldCacheRevision, v))
+}
+
+// CacheRevisionLT applies the LT predicate on the "cache_revision" field.
+func CacheRevisionLT(v int64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldLT(FieldCacheRevision, v))
+}
+
+// CacheRevisionLTE applies the LTE predicate on the "cache_revision" field.
+func CacheRevisionLTE(v int64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldLTE(FieldCacheRevision, v))
 }
 
 // AssignedByEQ applies the EQ predicate on the "assigned_by" field.

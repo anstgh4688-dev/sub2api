@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand/v2"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
@@ -50,10 +52,12 @@ type SubscriptionService struct {
 	entClient           *dbent.Client
 
 	// L1 缓存：加速中间件热路径的订阅查询
-	subCacheL1     *ristretto.Cache
-	subCacheGroup  singleflight.Group
-	subCacheTTL    time.Duration
-	subCacheJitter int // 抖动百分比
+	subCacheL1         *ristretto.Cache
+	subCacheGroup      singleflight.Group
+	subCacheMu         sync.RWMutex
+	subCacheGeneration uint64
+	subCacheTTL        time.Duration
+	subCacheJitter     int // 抖动百分比
 
 	maintenanceQueue *SubscriptionMaintenanceQueue
 	now              func() time.Time
@@ -142,23 +146,70 @@ func (s *SubscriptionService) jitteredTTL(ttl time.Duration) time.Duration {
 
 // InvalidateSubCache 失效指定用户+分组的订阅 L1 缓存
 func (s *SubscriptionService) InvalidateSubCache(userID, groupID int64) {
-	if s.subCacheL1 == nil {
-		return
-	}
-	s.subCacheL1.Del(subCacheKey(userID, groupID))
+	s.invalidateSubCacheKey(subCacheKey(userID, groupID), false)
 }
 
 // InvalidateSubCacheSync 失效订阅 L1 缓存并等待 Ristretto 删除操作生效。
 func (s *SubscriptionService) InvalidateSubCacheSync(userID, groupID int64) {
-	s.invalidateSubCacheKeySync(subCacheKey(userID, groupID))
+	s.invalidateSubCacheKey(subCacheKey(userID, groupID), true)
 }
 
 func (s *SubscriptionService) invalidateSubCacheKeySync(key string) {
+	s.invalidateSubCacheKey(key, true)
+
+}
+
+func (s *SubscriptionService) invalidateSubCacheKey(key string, wait bool) {
+	s.subCacheMu.Lock()
+	defer s.subCacheMu.Unlock()
+
+	s.subCacheGeneration++
+	s.subCacheGroup.Forget(key)
 	if s.subCacheL1 == nil {
 		return
 	}
 	s.subCacheL1.Del(key)
-	s.subCacheL1.Wait()
+	if wait {
+		s.subCacheL1.Wait()
+	}
+}
+
+func (s *SubscriptionService) getCachedSubscription(key string) (*UserSubscription, bool) {
+	if s.subCacheL1 == nil {
+		return nil, false
+	}
+
+	s.subCacheMu.RLock()
+	defer s.subCacheMu.RUnlock()
+	v, ok := s.subCacheL1.Get(key)
+	if !ok {
+		return nil, false
+	}
+	sub, ok := v.(*UserSubscription)
+	if !ok || sub == nil {
+		return nil, false
+	}
+	cp := *sub
+	return &cp, true
+}
+
+func (s *SubscriptionService) currentSubCacheGeneration() uint64 {
+	s.subCacheMu.RLock()
+	defer s.subCacheMu.RUnlock()
+	return s.subCacheGeneration
+}
+
+func (s *SubscriptionService) cacheSubscriptionIfCurrent(key string, generation uint64, sub *UserSubscription) {
+	if s.subCacheL1 == nil || sub == nil {
+		return
+	}
+
+	s.subCacheMu.RLock()
+	defer s.subCacheMu.RUnlock()
+	if generation != s.subCacheGeneration {
+		return
+	}
+	_ = s.subCacheL1.SetWithTTL(key, sub, 1, s.jitteredTTL(s.subCacheTTL))
 }
 
 // StartSubCacheInvalidationSubscriber 启动跨实例订阅 L1 缓存失效订阅。
@@ -188,6 +239,32 @@ func (s *SubscriptionService) invalidateSubscriptionCaches(userID, groupID int64
 		return fmt.Errorf("publish subscription cache invalidation: %w", err)
 	}
 	return nil
+}
+
+func (s *SubscriptionService) refreshSubscriptionCaches(sub *UserSubscription) error {
+	if sub == nil {
+		return ErrSubscriptionNilInput
+	}
+	s.InvalidateSubCacheSync(sub.UserID, sub.GroupID)
+	if s.billingCacheService == nil {
+		return nil
+	}
+
+	cacheCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var refreshErrors []error
+	if err := s.billingCacheService.StoreSubscriptionSnapshot(
+		cacheCtx,
+		sub.UserID,
+		sub.GroupID,
+		subscriptionCacheSnapshot(sub),
+	); err != nil {
+		refreshErrors = append(refreshErrors, fmt.Errorf("refresh billing subscription cache: %w", err))
+	}
+	if err := s.billingCacheService.PublishSubscriptionCacheInvalidation(cacheCtx, subCacheKey(sub.UserID, sub.GroupID)); err != nil {
+		refreshErrors = append(refreshErrors, fmt.Errorf("publish subscription cache invalidation: %w", err))
+	}
+	return errors.Join(refreshErrors...)
 }
 
 // AssignSubscriptionInput 分配订阅输入
@@ -598,17 +675,15 @@ func normalizeAssignValidityDays(days int) int {
 
 // RevokeSubscription 撤销订阅
 func (s *SubscriptionService) RevokeSubscription(ctx context.Context, subscriptionID int64) error {
-	// 先获取订阅信息用于失效缓存
-	sub, err := s.userSubRepo.GetByID(ctx, subscriptionID)
-	if err != nil {
-		return err
-	}
-
 	if err := s.userSubRepo.Delete(ctx, subscriptionID); err != nil {
 		return err
 	}
 
-	if err := s.invalidateSubscriptionCaches(sub.UserID, sub.GroupID); err != nil {
+	revoked, err := s.userSubRepo.GetByIDIncludeDeleted(ctx, subscriptionID)
+	if err != nil {
+		return err
+	}
+	if err := s.refreshSubscriptionCaches(revoked); err != nil {
 		return err
 	}
 
@@ -729,25 +804,18 @@ func (s *SubscriptionService) GetActiveSubscription(ctx context.Context, userID,
 	key := subCacheKey(userID, groupID)
 
 	// L1 缓存命中：返回浅拷贝
-	if s.subCacheL1 != nil {
-		if v, ok := s.subCacheL1.Get(key); ok {
-			if sub, ok := v.(*UserSubscription); ok {
-				cp := *sub
-				return &cp, nil
-			}
-		}
+	if sub, ok := s.getCachedSubscription(key); ok {
+		return sub, nil
 	}
 
 	// singleflight 防止并发击穿
 	value, err, _ := s.subCacheGroup.Do(key, func() (any, error) {
+		generation := s.currentSubCacheGeneration()
 		sub, err := s.userSubRepo.GetActiveByUserIDAndGroupID(ctx, userID, groupID)
 		if err != nil {
 			return nil, err // 直接透传 repo 已翻译的错误（NotFound → ErrSubscriptionNotFound，其他错误原样返回）
 		}
-		// 写入 L1 缓存
-		if s.subCacheL1 != nil {
-			_ = s.subCacheL1.SetWithTTL(key, sub, 1, s.jitteredTTL(s.subCacheTTL))
-		}
+		s.cacheSubscriptionIfCurrent(key, generation, sub)
 		return sub, nil
 	})
 	if err != nil {
@@ -881,15 +949,16 @@ func (s *SubscriptionService) AdminResetQuota(ctx context.Context, subscriptionI
 	if err := s.userSubRepo.ResetUsageWindows(ctx, sub.ID, resetDaily, resetWeekly, resetMonthly, timezone.StartOfDay(now), now); err != nil {
 		return nil, err
 	}
-	// Invalidate L1 ristretto cache. Ristretto's Del() is asynchronous by design,
-	// so call Wait() immediately after to flush pending operations and guarantee
-	// the deleted key is not returned on the very next Get() call.
-	s.InvalidateSubCacheSync(sub.UserID, sub.GroupID)
-	if s.billingCacheService != nil {
-		_ = s.billingCacheService.InvalidateSubscription(ctx, sub.UserID, sub.GroupID)
+	refreshed, err := s.userSubRepo.GetByID(ctx, subscriptionID)
+	if err != nil {
+		return nil, err
 	}
-	// Return the refreshed subscription from DB
-	return s.userSubRepo.GetByID(ctx, subscriptionID)
+	if err := s.refreshSubscriptionCaches(refreshed); err != nil {
+		// The reset is already committed. Reporting failure would invite a retry
+		// that can erase usage recorded after this reset.
+		log.Printf("Warning: subscription quota reset committed but cache refresh failed for subscription %d: %v", subscriptionID, err)
+	}
+	return refreshed, nil
 }
 
 // CheckAndResetWindows 检查并重置过期的窗口

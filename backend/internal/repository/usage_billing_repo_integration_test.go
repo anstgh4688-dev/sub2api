@@ -118,6 +118,12 @@ func TestUsageBillingRepositoryApply_DeduplicatesSubscriptionBilling(t *testing.
 	result1, err := repo.Apply(ctx, cmd)
 	require.NoError(t, err)
 	require.True(t, result1.Applied)
+	require.NotNil(t, result1.SubscriptionCacheSnapshot)
+	require.Equal(t, service.SubscriptionStatusActive, result1.SubscriptionCacheSnapshot.Status)
+	require.InDelta(t, 2.5, result1.SubscriptionCacheSnapshot.DailyUsage, 0.000001)
+	require.InDelta(t, 2.5, result1.SubscriptionCacheSnapshot.WeeklyUsage, 0.000001)
+	require.InDelta(t, 2.5, result1.SubscriptionCacheSnapshot.MonthlyUsage, 0.000001)
+	require.Positive(t, result1.SubscriptionCacheSnapshot.Version)
 
 	result2, err := repo.Apply(ctx, cmd)
 	require.NoError(t, err)

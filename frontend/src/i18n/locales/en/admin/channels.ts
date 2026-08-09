@@ -660,6 +660,14 @@ export default {
     subscriptions: {
       title: 'Subscription Management',
       description: 'Manage user subscriptions and quota limits',
+      quotaResetPage: {
+        title: 'Subscription Quota Reset',
+        searchPlaceholder: 'Search user email',
+        dailyUsage: 'Daily Usage',
+        weeklyUsage: 'Weekly Usage',
+        ofLimit: '/ {limit}',
+        noActiveSubscriptions: 'No active subscriptions'
+      },
       assignSubscription: 'Assign Subscription',
       adjustSubscription: 'Adjust Subscription',
       revokeSubscription: 'Revoke Subscription',
@@ -721,7 +729,10 @@ export default {
       restore: 'Restore',
       resetQuota: 'Reset Quota',
       resetQuotaTitle: 'Reset Usage Quota',
-      resetQuotaConfirm: "Reset the daily, weekly, and monthly usage quota for '{user}'? Usage will be zeroed and windows restarted from today.",
+      resetQuotaConfirm: "Choose which limit to reset for '{user}'. Usage in the selected period will be cleared and recalculated from today; usage in unselected periods will remain unchanged.",
+      resetDailyQuota: 'Reset Daily Limit',
+      resetWeeklyQuota: 'Reset Weekly Limit',
+      resetAllQuota: 'Reset All',
       quotaResetSuccess: 'Quota reset successfully',
       failedToResetQuota: 'Failed to reset quota',
       noSubscriptionsYet: 'No subscriptions yet',
@@ -768,7 +779,7 @@ export default {
           adjust: 'Adjust',
           adjustDesc: 'Extend or shorten the subscription validity period',
           resetQuota: 'Reset Quota',
-          resetQuotaDesc: 'Reset daily/weekly/monthly usage to zero',
+          resetQuotaDesc: 'Reset the daily or weekly limit separately, or reset all daily/weekly/monthly limits',
           revoke: 'Revoke',
           revokeDesc: 'Immediately terminate the subscription (restorable from the revoked list)'
         },
