@@ -23,11 +23,10 @@ function initIOSViewportZoomFix() {
 }
 
 function initThemeClass() {
-  const savedTheme = localStorage.getItem('theme')
-  const shouldUseDark =
-    savedTheme === 'dark' ||
-    (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
-  document.documentElement.classList.toggle('dark', shouldUseDark)
+  // 强制深色模式：屏蔽浅色。忽略 localStorage 与系统偏好，
+  // 覆盖历史浅色偏好，确保启动即深色且无法通过应用入口切回浅色。
+  document.documentElement.classList.add('dark')
+  localStorage.setItem('theme', 'dark')
 }
 
 async function bootstrap() {

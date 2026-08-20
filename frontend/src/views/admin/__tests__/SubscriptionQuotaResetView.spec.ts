@@ -50,19 +50,29 @@ const subscription: UserSubscription = {
     id: 5,
     name: 'open订阅',
     daily_limit_usd: 150,
-    weekly_limit_usd: 300
+    weekly_limit_usd: 300,
+    monthly_limit_usd: 900
   } as UserSubscription['group']
 }
 
 const DataTableStub = defineComponent({
-  props: { data: { type: Array, default: () => [] } },
+  props: {
+    columns: { type: Array, default: () => [] },
+    data: { type: Array, default: () => [] }
+  },
   template: `
     <div>
       <div v-for="row in data" :key="row.id">
+        <slot name="cell-monthly" :row="row" />
         <slot name="cell-actions" :row="row" />
       </div>
     </div>
   `
+})
+
+const QuotaUsageMeterStub = defineComponent({
+  props: { used: Number, limit: Number },
+  template: '<div data-test="quota-usage-meter" :data-used="used" :data-limit="limit" />'
 })
 
 describe('SubscriptionQuotaResetView', () => {
@@ -74,7 +84,7 @@ describe('SubscriptionQuotaResetView', () => {
     })
   })
 
-  it('loads active subscriptions and exposes only daily and weekly reset scopes', async () => {
+  it('shows monthly usage and exposes daily, weekly, and monthly reset scopes', async () => {
     const wrapper = shallowMount(SubscriptionQuotaResetView, {
       global: {
         stubs: {
@@ -86,7 +96,7 @@ describe('SubscriptionQuotaResetView', () => {
           Pagination: true,
           EmptyState: true,
           Icon: true,
-          QuotaUsageMeter: true
+          QuotaUsageMeter: QuotaUsageMeterStub
         }
       }
     })
@@ -100,10 +110,22 @@ describe('SubscriptionQuotaResetView', () => {
     )
 
     await wrapper.get('[data-test="open-quota-reset"]').trigger('click')
+    const table = wrapper.findComponent(DataTableStub)
+    expect(table.props('columns')).toContainEqual(
+      expect.objectContaining({
+        key: 'monthly',
+        label: 'admin.subscriptions.quotaResetPage.monthlyUsage'
+      })
+    )
+    expect(wrapper.get('[data-test="quota-usage-meter"]').attributes()).toMatchObject({
+      'data-used': String(subscription.monthly_usage_usd),
+      'data-limit': String(subscription.group?.monthly_limit_usd)
+    })
+
     const dialog = wrapper.findComponent(SubscriptionQuotaResetDialog)
     expect(dialog.props('show')).toBe(true)
     expect(dialog.props('subscription')).toEqual(subscription)
-    expect(dialog.props('scopes')).toEqual(['daily', 'weekly'])
+    expect(dialog.props('scopes')).toEqual(['daily', 'weekly', 'monthly'])
 
     dialog.vm.$emit('reset', subscription)
     await flushPromises()

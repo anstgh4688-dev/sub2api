@@ -45,11 +45,11 @@ describe('embedded-url', () => {
     expect(url.searchParams.get('src_url')).toBe('https://app.example.com/user/purchase')
   })
 
-  it('omits optional params when they are empty', () => {
+  it('forces the dark theme even when a legacy light value is passed', () => {
     const result = buildEmbeddedUrl('https://pay.example.com/checkout', undefined, '', 'light')
 
     const url = new URL(result)
-    expect(url.searchParams.get('theme')).toBe('light')
+    expect(url.searchParams.get('theme')).toBe('dark')
     expect(url.searchParams.get('ui_mode')).toBe('embedded')
     expect(url.searchParams.has('user_id')).toBe(false)
     expect(url.searchParams.has('token')).toBe(false)
@@ -60,8 +60,7 @@ describe('embedded-url', () => {
     expect(buildEmbeddedUrl('not a url', 1, 'token')).toBe('not a url')
   })
 
-  it('detects dark mode from document root class', () => {
-    document.documentElement.classList.add('dark')
+  it('always reports dark mode', () => {
     expect(detectTheme()).toBe('dark')
   })
 })

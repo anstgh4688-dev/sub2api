@@ -228,3 +228,57 @@ func TestOpenAIGatewayHandlerResponses_TextOnlyNotRejectedByImageConcurrency(t *
 	require.NotEqual(t, http.StatusTooManyRequests, rec.Code)
 	require.NotContains(t, rec.Body.String(), "Image generation concurrency limit exceeded")
 }
+
+func TestGatewayHandlerAcquireImageGenerationSlot_Returns429WhenFull(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/images/generations", nil)
+
+	h := &GatewayHandler{
+		cfg: &config.Config{
+			Gateway: config.GatewayConfig{
+				ImageConcurrency: config.ImageConcurrencyConfig{
+					Enabled:               true,
+					MaxConcurrentRequests: 1,
+					OverflowMode:          config.ImageConcurrencyOverflowModeReject,
+				},
+			},
+		},
+		imageLimiter: &imageConcurrencyLimiter{},
+	}
+	release, acquired := h.acquireImageGenerationSlot(c, false)
+	require.True(t, acquired)
+	require.NotNil(t, release)
+	defer release()
+
+	blockedRelease, blocked := h.acquireImageGenerationSlot(c, false)
+
+	require.False(t, blocked)
+	require.Nil(t, blockedRelease)
+	require.Equal(t, http.StatusTooManyRequests, rec.Code)
+	require.Equal(t, "rate_limit_error", gjson.GetBytes(rec.Body.Bytes(), "error.type").String())
+	require.Contains(t, rec.Body.String(), "Image generation concurrency limit exceeded")
+}
+
+func TestGatewayHandlerAcquireImageGenerationSlot_DisabledBypasses(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/images/generations", nil)
+
+	h := &GatewayHandler{
+		cfg: &config.Config{
+			Gateway: config.GatewayConfig{
+				ImageConcurrency: config.ImageConcurrencyConfig{
+					Enabled: false,
+				},
+			},
+		},
+		imageLimiter: &imageConcurrencyLimiter{},
+	}
+	release, acquired := h.acquireImageGenerationSlot(c, false)
+	require.True(t, acquired)
+	require.Nil(t, release)
+	require.Equal(t, http.StatusOK, rec.Code)
+}

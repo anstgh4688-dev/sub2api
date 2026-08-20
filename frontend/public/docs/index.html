@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#020409" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Sub2API 接入文档：创建 API 密钥、选择分组、验证请求，并配置 Codex、Claude Code 与 OpenAI SDK。"
+    />
+    <meta name="robots" content="index, follow" />
+    <title>快速开始 - Sub2API Docs</title>
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="stylesheet" href="/docs/styles.css" />
+    <script src="/docs/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#article">跳到正文</a>
+
+    <header class="site-header">
+      <div class="header-brand-group">
+        <button class="icon-button mobile-nav-button" type="button" data-nav-open aria-label="打开文档目录" aria-expanded="false">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+        </button>
+        <a class="brand" href="/" aria-label="返回站点首页">
+          <span class="brand-mark"><img src="/logo.svg" alt="" width="32" height="32" data-site-logo /></span>
+          <span class="brand-name" data-site-name>Sub2API</span>
+          <span class="brand-docs">Docs</span>
+        </a>
+        <span class="version-badge">Gateway API</span>
+      </div>
+
+      <button class="search-trigger" type="button" data-search-open aria-label="搜索文档">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg>
+        <span>搜索文档</span>
+        <kbd data-search-key>Ctrl K</kbd>
+      </button>
+
+      <nav class="header-actions" aria-label="站点导航">
+        <a href="/model-plaza">模型广场</a>
+        <a href="/dashboard">控制台</a>
+      </nav>
+    </header>
+
+    <div class="mobile-backdrop" data-nav-backdrop hidden></div>
+
+    <aside class="sidebar" data-sidebar aria-label="文档目录">
+      <div class="sidebar-mobile-head">
+        <strong>文档目录</strong>
+        <button class="icon-button" type="button" data-nav-close aria-label="关闭文档目录">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
+        </button>
+      </div>
+
+      <nav class="docs-nav">
+        <section>
+          <h2>开始使用</h2>
+          <a class="active" href="#overview"><span class="nav-index">00</span>快速开始</a>
+          <a href="#create-key"><span class="nav-index">01</span>创建 API 密钥</a>
+          <a href="#select-group"><span class="nav-index">02</span>选择分组</a>
+          <a href="#first-request"><span class="nav-index">03</span>验证请求</a>
+        </section>
+        <section>
+          <h2>核心概念</h2>
+          <a href="#authentication">身份认证</a>
+          <a href="#base-url">接口与端点</a>
+          <a href="#models">模型选择</a>
+          <a href="#streaming">流式响应</a>
+        </section>
+        <section>
+          <h2>工具配置</h2>
+          <a href="#codex">Codex</a>
+          <a href="#claude-code">Claude Code</a>
+          <a href="#openai-sdk">OpenAI SDK</a>
+          <a href="#cc-switch">CC Switch</a>
+        </section>
+        <section>
+          <h2>排查与支持</h2>
+          <a href="#errors">常见错误</a>
+          <a href="#limits">限额与并发</a>
+          <a href="#support">获取支持</a>
+        </section>
+      </nav>
+
+      <a class="sidebar-status" href="/dashboard">
+        <span class="status-pulse" aria-hidden="true"></span>
+        <span><strong>进入控制台</strong><small>密钥、用量与余额</small></span>
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg>
+      </a>
+    </aside>
+
+    <main class="docs-shell">
+      <div class="docs-layout">
+        <article class="doc-article" id="article">
+          <nav class="breadcrumb" aria-label="面包屑">
+            <a href="#overview">开始使用</a>
+            <span aria-hidden="true">/</span>
+            <span>快速开始</span>
+          </nav>
+
+          <header class="article-header section-anchor" id="overview" data-search-title="Sub2API 快速开始 API 接入">
+            <p class="eyebrow">GETTING STARTED / 00</p>
+            <h1><span data-site-name>Sub2API</span> API 快速开始</h1>
+            <p class="article-lede">从控制台创建密钥，为密钥分配正确的平台分组，然后用当前站点的网关地址完成第一次请求。本文也给出常用开发工具的配置入口。</p>
+            <div class="article-meta">
+              <span><span class="status-pulse" aria-hidden="true"></span>预计 5 分钟</span>
+              <span>适用于当前部署实例</span>
+            </div>
+          </header>
+
+          <section class="quick-path" aria-label="快速接入流程">
+            <a href="#create-key"><span>01</span><strong>创建密钥</strong><small>在控制台生成凭证</small></a>
+            <a href="#select-group"><span>02</span><strong>绑定分组</strong><small>确定平台和模型范围</small></a>
+            <a href="#first-request"><span>03</span><strong>发送请求</strong><small>用模型 ID 验证链路</small></a>
+            <a href="#limits"><span>04</span><strong>检查用量</strong><small>确认额度和并发限制</small></a>
+          </section>
+
+          <section class="doc-section section-anchor" id="create-key" data-search-title="创建 API 密钥 Key 控制台">
+            <div class="section-number">01</div>
+            <h2><a href="#create-key">创建 API 密钥</a></h2>
+            <p>登录控制台后进入「API 密钥」，点击创建按钮。名称只用于区分用途，建议按客户端或环境命名，例如「Codex 开发」或「生产服务」。</p>
+            <ol class="task-list">
+              <li><span>1</span><p>打开<a href="/login">登录页</a>，完成登录或注册。</p></li>
+              <li><span>2</span><p>进入<a href="/keys">API 密钥</a>，填写名称并设置需要的配额、有效期或 IP 规则。</p></li>
+              <li><span>3</span><p>创建后立即保存完整密钥。后续示例统一使用环境变量 <code>SUB2API_API_KEY</code>。</p></li>
+            </ol>
+            <div class="callout callout-danger">
+              <span class="callout-mark" aria-hidden="true">!</span>
+              <div><strong>密钥属于服务端凭证</strong><p>不要写入浏览器代码、移动端包、公开仓库或文档截图。生产环境应通过环境变量或密钥管理服务注入。</p></div>
+            </div>
+          </section>
+
+          <section class="doc-section section-anchor" id="select-group" data-search-title="选择分组 平台 模型 权限 计费">
+            <div class="section-number">02</div>
+            <h2><a href="#select-group">选择与客户端匹配的分组</a></h2>
+            <p>分组决定密钥可使用的平台、模型集合、调度池和计费规则。同一密钥应绑定到与你准备使用的协议相匹配的分组。</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>使用场景</th><th>分组平台</th><th>主要接口</th></tr></thead>
+                <tbody>
+                  <tr><td>Codex、OpenAI SDK</td><td>OpenAI 或兼容分组</td><td><code>/v1/responses</code></td></tr>
+                  <tr><td>Claude Code、Anthropic SDK</td><td>Anthropic 或兼容分组</td><td><code>/v1/messages</code></td></tr>
+                  <tr><td>Gemini CLI / SDK</td><td>Gemini 分组</td><td><code>/v1beta</code></td></tr>
+                  <tr><td>通用 OpenAI 客户端</td><td>支持聊天补全的分组</td><td><code>/v1/chat/completions</code></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="callout callout-note">
+              <span class="callout-mark" aria-hidden="true">i</span>
+              <div><strong>以控制台实际结果为准</strong><p>管理员可以调整分组和模型范围。请求前先在<a href="/model-plaza">模型广场</a>或 <code>GET /v1/models</code> 中确认可用的精确模型 ID。</p></div>
+            </div>
+          </section>
+
+          <section class="doc-section section-anchor" id="first-request" data-search-title="第一次请求 cURL Python Node OpenAI">
+            <div class="section-number">03</div>
+            <h2><a href="#first-request">验证第一条请求</a></h2>
+            <p>下面示例使用 OpenAI 兼容的聊天补全接口。把 <code>YOUR_MODEL_ID</code> 替换为当前分组内真实存在的模型 ID。</p>
+            <div class="code-card" data-code-group>
+              <div class="code-toolbar" role="tablist" aria-label="示例语言">
+                <div class="code-tabs">
+                  <button class="active" type="button" role="tab" aria-selected="true" data-code-tab="curl">cURL</button>
+                  <button type="button" role="tab" aria-selected="false" data-code-tab="python">Python</button>
+                  <button type="button" role="tab" aria-selected="false" data-code-tab="node">Node.js</button>
+                </div>
+                <button class="copy-button" type="button" data-copy-current>
+                  <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" /></svg>
+                  <span>复制</span>
+                </button>
+              </div>
+              <pre data-code-panel="curl"><code>curl {{API_BASE_URL}}/chat/completions \
+  -H "Authorization: Bearer $SUB2API_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "YOUR_MODEL_ID",
+    "messages": [{"role": "user", "content": "你好"}],
+    "stream": true
+  }'</code></pre>
+              <pre data-code-panel="python" hidden><code>from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="{{API_BASE_URL}}",
+)
+
+response = client.chat.completions.create(
+    model="YOUR_MODEL_ID",
+    messages=[{"role": "user", "content": "你好"}],
+)
+print(response.choices[0].message.content)</code></pre>
+              <pre data-code-panel="node" hidden><code>import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: process.env.SUB2API_API_KEY,
+  baseURL: "{{API_BASE_URL}}",
+});
+
+const response = await client.chat.completions.create({
+  model: "YOUR_MODEL_ID",
+  messages: [{ role: "user", content: "你好" }],
+});
+console.log(response.choices[0].message.content);</code></pre>
+            </div>
+            <div class="response-strip"><span>HTTP</span><strong>200 OK</strong><p>返回 JSON 或持续输出 SSE 事件，表示鉴权、分组和模型路由均已连通。</p></div>
+          </section>
+
+          <section class="doc-section section-anchor" id="authentication" data-search-title="身份认证 Authorization Bearer Token">
+            <p class="eyebrow">CORE CONCEPTS</p>
+            <h2><a href="#authentication">身份认证</a></h2>
+            <p>网关请求使用 Bearer Token。每个密钥独立记录额度、限流和使用日志，因此不同应用与环境应使用不同密钥。</p>
+            <div class="inline-value">
+              <span>HTTP Header</span>
+              <code>Authorization: Bearer $SUB2API_API_KEY</code>
+              <button type="button" data-copy-text="Authorization: Bearer $SUB2API_API_KEY" aria-label="复制认证请求头">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3" /></svg>
+              </button>
+            </div>
+          </section>
+
+          <section class="doc-section section-anchor" id="base-url" data-search-title="Base URL 接口 端点 Responses Messages Models">
+            <h2><a href="#base-url">Base URL 与常用端点</a></h2>
+            <p>SDK 通常填写包含 <code>/v1</code> 的 Base URL；直接发送 HTTP 请求时，再追加具体资源路径。</p>
+            <div class="endpoint-banner"><span>BASE URL</span><code data-api-base>https://your-domain.example/v1</code><button type="button" data-copy-selector="[data-api-base]">复制</button></div>
+            <div class="table-wrap endpoint-table">
+              <table>
+                <thead><tr><th>方法</th><th>端点</th><th>用途</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="method method-post">POST</span></td><td><code>/v1/responses</code></td><td>OpenAI Responses / Codex</td></tr>
+                  <tr><td><span class="method method-post">POST</span></td><td><code>/v1/chat/completions</code></td><td>OpenAI 兼容聊天补全</td></tr>
+                  <tr><td><span class="method method-post">POST</span></td><td><code>/v1/messages</code></td><td>Anthropic Messages</td></tr>
+                  <tr><td><span class="method method-get">GET</span></td><td><code>/v1/models</code></td><td>查询密钥可见的模型</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="doc-section section-anchor" id="models" data-search-title="模型选择 model ID 模型广场">
+            <h2><a href="#models">模型选择</a></h2>
+            <p>模型名不是展示标题，而是请求体中的精确 <code>model</code> 值。模型范围会随分组配置变化，不建议把文档示例中的占位值直接写入生产代码。</p>
+            <div class="split-notes">
+              <div><span>01</span><strong>先查列表</strong><p>通过模型广场或 <code>GET /v1/models</code> 获取当前密钥可见模型。</p></div>
+              <div><span>02</span><strong>再固定版本</strong><p>确认能力与价格后，将精确模型 ID 写入应用配置并纳入变更管理。</p></div>
+            </div>
+          </section>
+
+          <section class="doc-section section-anchor" id="streaming" data-search-title="流式响应 stream SSE 断开">
+            <h2><a href="#streaming">流式响应</a></h2>
+            <p>请求体设置 <code>"stream": true</code> 后，网关会持续转发上游事件。客户端应增量读取事件，并在用户取消或网络断开时主动终止请求，避免无效消耗。</p>
+            <div class="flow-line" aria-label="流式响应链路">
+              <span>客户端请求</span><b aria-hidden="true">→</b><span>网关鉴权与调度</span><b aria-hidden="true">→</b><span>SSE 增量事件</span><b aria-hidden="true">→</b><span>完成或取消</span>
+            </div>
+          </section>
+
+          <section class="doc-section section-anchor" id="codex" data-search-title="Codex CLI config.toml auth.json Responses 配置">
+            <p class="eyebrow">TOOLING</p>
+            <h2><a href="#codex">Codex 配置</a></h2>
+            <p>为 Codex 创建独立 Provider，并通过环境变量提供密钥。模型 ID 请替换为 OpenAI 分组实际提供的模型。</p>
+            <div class="code-card compact">
+              <div class="code-toolbar"><span class="file-label">~/.codex/config.toml</span><button class="copy-button" type="button" data-copy-next><span>复制</span></button></div>
+              <pre><code>model_provider = "sub2api"
+model = "YOUR_MODEL_ID"
+
+[model_providers.sub2api]
+name = "Sub2API"
+base_url = "{{API_BASE_URL}}"
+env_key = "SUB2API_API_KEY"
+wire_api = "responses"
+requires_openai_auth = false
+supports_websockets = false</code></pre>
+            </div>
+            <div class="code-card compact">
+              <div class="code-toolbar"><span class="file-label">Terminal</span><button class="copy-button" type="button" data-copy-next><span>复制</span></button></div>
+              <pre><code>export SUB2API_API_KEY="YOUR_API_KEY"
+codex</code></pre>
+            </div>
+            <div class="callout callout-note"><span class="callout-mark" aria-hidden="true">i</span><div><strong>配置更新后新建会话</strong><p>完全退出并重新打开 Codex CLI、桌面端或编辑器扩展，让客户端重新加载 Provider 与工具配置。</p></div></div>
+          </section>
+
+          <section class="doc-section section-anchor" id="claude-code" data-search-title="Claude Code ANTHROPIC_BASE_URL AUTH_TOKEN 配置">
+            <h2><a href="#claude-code">Claude Code 配置</a></h2>
+            <p>Claude Code 使用 Anthropic 兼容根地址。这里的地址不带 <code>/v1</code>，客户端会自行追加 Messages API 路径。</p>
+            <div class="code-card compact">
+              <div class="code-toolbar"><span class="file-label">Terminal</span><button class="copy-button" type="button" data-copy-next><span>复制</span></button></div>
+              <pre><code>export ANTHROPIC_BASE_URL="{{API_ROOT_URL}}"
+export ANTHROPIC_AUTH_TOKEN="YOUR_API_KEY"
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+export CLAUDE_CODE_ATTRIBUTION_HEADER=0
+
+claude</code></pre>
+            </div>
+            <p class="fine-print">如使用 Antigravity 专用分组，根地址通常需要追加 <code>/antigravity</code>。请以控制台「使用密钥」弹窗生成的配置为准。</p>
+          </section>
+
+          <section class="doc-section section-anchor" id="openai-sdk" data-search-title="OpenAI SDK Python JavaScript base_url">
+            <h2><a href="#openai-sdk">OpenAI SDK</a></h2>
+            <p>现有 OpenAI SDK 项目通常只需替换密钥和 Base URL。业务请求结构保持不变，模型名改为分组中存在的 ID。</p>
+            <div class="code-card compact">
+              <div class="code-toolbar"><span class="file-label">Python</span><button class="copy-button" type="button" data-copy-next><span>复制</span></button></div>
+              <pre><code>import os
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ["SUB2API_API_KEY"],
+    base_url="{{API_BASE_URL}}",
+)</code></pre>
+            </div>
+          </section>
+
+          <section class="doc-section section-anchor" id="cc-switch" data-search-title="CC Switch 一键导入 客户端配置">
+            <h2><a href="#cc-switch">CC Switch</a></h2>
+            <p>API 密钥列表提供「导入到 CC-Switch」操作。选择目标客户端后，控制台会把站点地址、平台类型和当前密钥写入导入链接。</p>
+            <ol class="task-list compact-list">
+              <li><span>1</span><p>先安装 CC Switch，并确认系统已注册 <code>ccswitch://</code> 协议。</p></li>
+              <li><span>2</span><p>进入<a href="/keys">API 密钥</a>，在目标密钥右侧点击「导入到 CC-Switch」。</p></li>
+              <li><span>3</span><p>核对 Provider、平台和 Base URL，保存并启用配置。</p></li>
+              <li><span>4</span><p>重启对应的命令行工具或编辑器。</p></li>
+            </ol>
+          </section>
+
+          <section class="doc-section section-anchor" id="errors" data-search-title="错误处理 400 401 403 404 429 500 503">
+            <p class="eyebrow">TROUBLESHOOTING</p>
+            <h2><a href="#errors">常见错误</a></h2>
+            <div class="error-list">
+              <div><code>400</code><strong>请求参数不匹配</strong><p>检查协议、模型 ID、请求体字段与所选分组能力。</p></div>
+              <div><code>401</code><strong>认证失败</strong><p>检查密钥是否完整、有效，以及请求头是否使用 Bearer 格式。</p></div>
+              <div><code>403</code><strong>权限或访问规则拦截</strong><p>检查密钥状态、IP 白名单、分组绑定和账户权限。</p></div>
+              <div><code>404</code><strong>端点不存在</strong><p>确认 Base URL 没有重复或遗漏 <code>/v1</code>。</p></div>
+              <div><code>429</code><strong>达到限流或并发上限</strong><p>降低并发，并按响应信息等待后重试。</p></div>
+              <div><code>5xx</code><strong>网关或上游暂时不可用</strong><p>保留请求时间与错误内容，到使用日志中定位对应记录。</p></div>
+            </div>
+          </section>
+
+          <section class="doc-section section-anchor" id="limits" data-search-title="限额 并发 RPM 用量 余额 日志">
+            <h2><a href="#limits">额度、并发与使用记录</a></h2>
+            <p>密钥可以独立设置消费额度、时间窗口限流、并发限制、有效期和 IP 访问规则。排查调用失败时，先同时检查密钥页与使用记录。</p>
+            <div class="action-row">
+              <a class="primary-action" href="/keys">管理 API 密钥 <span aria-hidden="true">→</span></a>
+              <a class="secondary-action" href="/usage">查看使用记录 <span aria-hidden="true">→</span></a>
+            </div>
+          </section>
+
+          <section class="doc-section support-section section-anchor" id="support" data-search-title="联系支持 排查信息 Request ID">
+            <div>
+              <p class="eyebrow">SUPPORT</p>
+              <h2><a href="#support">获取支持</a></h2>
+              <p>反馈问题时请提供请求时间、使用端点、模型 ID、HTTP 状态码和使用日志中的错误信息。不要发送完整 API 密钥。</p>
+            </div>
+            <div class="support-contact">
+              <span>站点联系信息</span>
+              <strong data-contact-info>请联系站点管理员</strong>
+              <a href="/dashboard">打开控制台</a>
+            </div>
+          </section>
+
+          <footer class="doc-footer">
+            <span><span data-site-name>Sub2API</span> Docs</span>
+            <a href="#overview">回到顶部 ↑</a>
+          </footer>
+        </article>
+
+        <aside class="on-this-page" aria-label="本页内容">
+          <strong>本页内容</strong>
+          <nav data-page-toc>
+            <a class="active" href="#overview">概览</a>
+            <a href="#create-key">创建密钥</a>
+            <a href="#select-group">选择分组</a>
+            <a href="#first-request">验证请求</a>
+            <a href="#authentication">身份认证</a>
+            <a href="#base-url">接口与端点</a>
+            <a href="#models">模型选择</a>
+            <a href="#codex">Codex</a>
+            <a href="#claude-code">Claude Code</a>
+            <a href="#errors">常见错误</a>
+          </nav>
+          <div class="toc-links">
+            <a href="/keys">创建 API 密钥</a>
+            <a href="/usage">查看使用记录</a>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <div class="search-dialog" data-search-dialog hidden>
+      <button class="search-backdrop" type="button" data-search-close aria-label="关闭搜索"></button>
+      <section class="search-panel" role="dialog" aria-modal="true" aria-labelledby="search-title">
+        <h2 id="search-title" class="sr-only">搜索文档</h2>
+        <div class="search-input-wrap">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg>
+          <input type="search" placeholder="搜索主题、端点或错误码" autocomplete="off" data-search-input />
+          <kbd>Esc</kbd>
+        </div>
+        <div class="search-results" data-search-results></div>
+        <p class="search-empty" data-search-empty hidden>没有找到匹配内容</p>
+      </section>
+    </div>
+
+    <div class="toast" role="status" aria-live="polite" data-toast>已复制</div>
+  </body>
+</html>

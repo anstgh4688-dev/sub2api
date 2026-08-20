@@ -171,6 +171,52 @@ export default {
         }
       }
     },
+    // Usage modes
+    modes: {
+      title: 'Two ways to use it, pick what fits',
+      subtitle: 'Subscription amortizes upstream costs; API billing is pure pay-as-you-go — same high-availability backend, two pricing shapes.',
+      viewPrice: 'Model pricing',
+      subscription: {
+        kicker: 'SUBSCRIPTION MODE',
+        title: 'Subscription · amortize upstream cost',
+        lede: 'For stable workloads and teams: spread a high-quality upstream account\'s fixed cost across a daily / weekly / monthly plan — the more you use, the cheaper it gets.',
+        p1: {
+          tag: 'COST SHARING',
+          title: 'Spread fixed upstream cost',
+          desc: 'Distribute the upstream account cost across daily, weekly, or monthly plans — keep upstream quality, lower the entry barrier.'
+        },
+        p2: {
+          tag: 'BUDGET FRIENDLY',
+          title: 'Capped monthly fee, predictable spend',
+          desc: 'Unlimited calls within the plan; monthly billing means no per-spike charges.'
+        },
+        p3: {
+          tag: 'TEAM READY',
+          title: 'Share with one click',
+          desc: 'Hand out sub-keys to teammates with per-role limits and usage tiers — no signups required.'
+        }
+      },
+      api: {
+        kicker: 'API BILLING MODE',
+        title: 'API billing · pure pay-as-you-go',
+        lede: 'For quick validation, lightweight scripts, and trials: grab a key, get it working, then pay only for the tokens you actually use.',
+        p1: {
+          tag: 'PAY AS YOU GO',
+          title: 'Per-token, real-time billing',
+          desc: 'Settle after each call, down to the token; keep calling as long as there\'s balance, no minimum spend.'
+        },
+        p2: {
+          tag: 'INSTANT ACTIVATION',
+          title: 'Top up and go',
+          desc: 'Get a working key the moment you top up — skip the subscription queue and start validating ideas faster.'
+        },
+        p3: {
+          tag: 'TRANSPARENT USAGE',
+          title: 'Clear usage, anytime',
+          desc: 'A live dashboard shows tokens and cost for every call — budgets and flow at a glance.'
+        }
+      }
+    },
     providers: {
       title: 'Supported AI Models',
       description: 'One API, Multiple Choices',

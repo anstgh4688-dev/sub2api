@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#79f4bd"/>
+      <stop offset="0.48" stop-color="#39d9e7"/>
+      <stop offset="1" stop-color="#3875f6"/>
+    </linearGradient>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse">
+      <path d="M 42 0 L 0 0 0 42" fill="none" stroke="#8ca8d6" stroke-opacity="0.09" stroke-width="1"/>
+    </pattern>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#000814" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="#07111f"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect x="42" y="42" width="1116" height="546" rx="28" fill="#0b1729" stroke="#9fb8e8" stroke-opacity="0.2"/>
+  <rect x="42" y="42" width="8" height="546" rx="4" fill="url(#brand)"/>
+
+  <g transform="translate(112 142)">
+    <text x="0" y="0" fill="#79f4bd" font-family="PingFang SC, Noto Sans SC, sans-serif" font-size="25" font-weight="700">MOYI / 模驿</text>
+    <text x="0" y="96" fill="#f7fbff" font-family="PingFang SC, Noto Sans SC, sans-serif" font-size="72" font-weight="800">AI API 统一网关</text>
+    <text x="0" y="154" fill="#a9bddb" font-family="PingFang SC, Noto Sans SC, sans-serif" font-size="29">国内直连 · 智能调度 · 实时监控</text>
+
+    <g transform="translate(0 222)" font-family="Inter, PingFang SC, sans-serif" font-size="24" font-weight="700">
+      <rect width="142" height="54" rx="10" fill="#11243a" stroke="#79f4bd" stroke-opacity="0.55"/>
+      <text x="71" y="35" text-anchor="middle" fill="#dfffee">Claude</text>
+      <rect x="160" width="112" height="54" rx="10" fill="#11243a" stroke="#39d9e7" stroke-opacity="0.55"/>
+      <text x="216" y="35" text-anchor="middle" fill="#e0fbff">GPT</text>
+      <rect x="290" width="142" height="54" rx="10" fill="#11243a" stroke="#6d9cff" stroke-opacity="0.55"/>
+      <text x="361" y="35" text-anchor="middle" fill="#e5edff">Gemini</text>
+    </g>
+  </g>
+
+  <g transform="translate(845 136)" filter="url(#shadow)">
+    <rect width="260" height="260" rx="66" fill="#0a1a39" stroke="#a5bfff" stroke-opacity="0.22" stroke-width="2"/>
+    <g transform="translate(26 26) scale(8.67)" fill="none" stroke="url(#brand)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.7">
+      <path d="m19.25 7.65-2.55-3.2a1.33 1.33 0 0 0-1.03-.5H8.58c-.34 0-.67.13-.91.37L4.15 7.65c-.93.88-.6 1.52.65 2.3l9.55 5.97"/>
+      <path d="m4.75 16.35 2.55 3.2c.25.31.63.5 1.03.5h7.09c.34 0 .67-.13.91-.37l3.52-3.33c.93-.88.6-1.52-.65-2.3L9.65 8.08"/>
+    </g>
+    <text x="130" y="322" text-anchor="middle" fill="#dbeafe" font-family="Inter, sans-serif" font-size="24" font-weight="700">myrt.cc</text>
+  </g>
+</svg>
