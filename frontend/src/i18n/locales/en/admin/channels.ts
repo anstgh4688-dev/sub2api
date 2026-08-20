@@ -700,6 +700,7 @@ export default {
         searchPlaceholder: 'Search user email',
         dailyUsage: 'Daily Usage',
         weeklyUsage: 'Weekly Usage',
+        monthlyUsage: 'Monthly Usage',
         ofLimit: '/ {limit}',
         noActiveSubscriptions: 'No active subscriptions'
       },
@@ -767,6 +768,7 @@ export default {
       resetQuotaConfirm: "Choose which limit to reset for '{user}'. Usage in the selected period will be cleared and recalculated from today; usage in unselected periods will remain unchanged.",
       resetDailyQuota: 'Reset Daily Limit',
       resetWeeklyQuota: 'Reset Weekly Limit',
+      resetMonthlyQuota: 'Reset Monthly Limit',
       resetAllQuota: 'Reset All',
       quotaResetSuccess: 'Quota reset successfully',
       failedToResetQuota: 'Failed to reset quota',

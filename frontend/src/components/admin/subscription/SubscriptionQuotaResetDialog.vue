@@ -54,7 +54,7 @@ import { extractApiErrorMessage } from '@/utils/apiError'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import Icon from '@/components/icons/Icon.vue'
 
-type ResetQuotaScope = 'daily' | 'weekly' | 'all'
+type ResetQuotaScope = 'daily' | 'weekly' | 'monthly' | 'all'
 
 interface Props {
   show: boolean
@@ -63,7 +63,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  scopes: () => ['daily', 'weekly', 'all']
+  scopes: () => ['daily', 'weekly', 'monthly', 'all']
 })
 
 const emit = defineEmits<{
@@ -91,6 +91,14 @@ const actionConfig = {
     buttonClass: 'btn-secondary',
     testId: 'reset-quota-weekly',
     payload: { daily: false, weekly: true, monthly: false }
+  },
+  monthly: {
+    scope: 'monthly',
+    labelKey: 'admin.subscriptions.resetMonthlyQuota',
+    icon: 'calendar',
+    buttonClass: 'btn-secondary',
+    testId: 'reset-quota-monthly',
+    payload: { daily: false, weekly: false, monthly: true }
   },
   all: {
     scope: 'all',

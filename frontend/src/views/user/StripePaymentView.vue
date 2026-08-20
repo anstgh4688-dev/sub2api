@@ -241,10 +241,9 @@ async function confirmWechatPay(stripe: Stripe, clientSecret: string) {
 }
 
 function mountPaymentElement(stripe: Stripe, clientSecret: string) {
-  const isDark = document.documentElement.classList.contains('dark')
   const elements = stripe.elements({
     clientSecret,
-    appearance: { theme: isDark ? 'night' : 'stripe', variables: { borderRadius: '8px' } },
+    appearance: { theme: 'night', variables: { borderRadius: '8px' } },
   })
   elementsInstance = elements
   const paymentElement = elements.create('payment', {

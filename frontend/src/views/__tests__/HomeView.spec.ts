@@ -134,7 +134,7 @@ describe('HomeView', () => {
     appStore.fetchPublicSettings.mockReset()
 
     localStorage.clear()
-    document.documentElement.classList.remove('dark')
+    document.documentElement.classList.add('dark')
     Object.defineProperty(window, 'matchMedia', {
       configurable: true,
       value: vi.fn().mockReturnValue({ matches: false })
@@ -194,7 +194,7 @@ describe('HomeView', () => {
     wrapper.unmount()
   })
 
-  it('renders the comparison table and legal links', () => {
+  it('renders the usage modes section and legal links', () => {
     appStore.cachedPublicSettings = {
       home_content: '',
       login_agreement_documents: [
@@ -205,7 +205,8 @@ describe('HomeView', () => {
 
     const wrapper = mountHome()
 
-    expect(wrapper.findAll('.compare-table tbody tr')).toHaveLength(5)
+    expect(wrapper.findAll('.flow-node')).toHaveLength(3)
+    expect(wrapper.get('.primary-action--price').attributes('href')).toBe('https://pay.ldxp.cn/shop/MTZ1W37Y')
     expect(wrapper.get('[data-to="/legal/terms"]').text()).toBe('Terms of Service')
     expect(wrapper.get('[data-to="/legal/privacy"]').text()).toBe('Privacy Policy')
 
@@ -259,20 +260,10 @@ describe('HomeView', () => {
     wrapper.unmount()
   })
 
-  it('persists the theme selected from the header', async () => {
-    // With no explicit preference the landing page is dark-first, so the
-    // toggle sequence is dark → light → dark.
+  it('does not expose a light-theme switcher', () => {
     const wrapper = mountHome()
 
-    await wrapper.get('button.header-icon').trigger('click')
-
-    expect(document.documentElement.classList.contains('dark')).toBe(false)
-    expect(localStorage.getItem('theme')).toBe('light')
-
-    await wrapper.get('button.header-icon').trigger('click')
-
-    expect(document.documentElement.classList.contains('dark')).toBe(true)
-    expect(localStorage.getItem('theme')).toBe('dark')
+    expect(wrapper.find('button.header-icon').exists()).toBe(false)
 
     wrapper.unmount()
   })

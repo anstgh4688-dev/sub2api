@@ -80,3 +80,11 @@ describe('AppSidebar subscription feature flag', () => {
     expect(componentSource).toMatch(/path: '\/purchase'[^\n]*label: purchaseNavLabel\.value/)
   })
 })
+
+describe('AppSidebar image generation entry', () => {
+  it('declares the image generation nav item linking to /image-generation', () => {
+    expect(componentSource).toContain("path: '/image-generation'")
+    expect(componentSource).toContain("t('nav.imageGeneration')")
+    expect(componentSource).toContain('ImageGenerationIcon')
+  })
+})

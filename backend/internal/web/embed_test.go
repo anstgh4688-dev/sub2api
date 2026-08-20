@@ -23,94 +23,58 @@ func init() {
 	gin.SetMode(gin.TestMode)
 }
 
-func TestInjectSiteTitle(t *testing.T) {
-	t.Run("replaces_title_with_site_name", func(t *testing.T) {
-		html := []byte(`<html><head><title>Sub2API - AI API Gateway</title></head><body></body></html>`)
-		settingsJSON := []byte(`{"site_name":"MyCustomSite"}`)
+func TestInjectSiteMetadata(t *testing.T) {
+	t.Run("injects_branding_and_search_metadata", func(t *testing.T) {
+		html := []byte(`<!doctype html><html lang="zh-CN"><head>
+			<title>Sub2API</title>
+			<meta name="description" content="old description">
+			<meta property="og:site_name" content="Sub2API">
+			<meta property="og:title" content="Sub2API">
+			<meta property="og:description" content="old description">
+			<meta name="twitter:title" content="Sub2API">
+			<meta name="twitter:description" content="old description">
+			<script id="site-structured-data" type="application/ld+json">{}</script>
+		</head><body></body></html>`)
+		settingsJSON := []byte(`{"site_name":"模驿","site_subtitle":"稳定的多模型 AI API 接入"}`)
 
-		result := injectSiteTitle(html, settingsJSON)
+		result := injectSiteMetadata(html, settingsJSON)
+		body := string(result)
 
-		assert.Contains(t, string(result), "<title>MyCustomSite - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>")
-		assert.NotContains(t, string(result), "Sub2API")
+		assert.Contains(t, body, "<title>模驿 - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>")
+		assert.Contains(t, body, `name="description" content="稳定的多模型 AI API 接入"`)
+		assert.Contains(t, body, `property="og:site_name" content="模驿"`)
+		assert.Contains(t, body, `property="og:title" content="模驿 - AI API 中转 | Claude、GPT、Gemini 多模型网关"`)
+		assert.Contains(t, body, `name="twitter:description" content="稳定的多模型 AI API 接入"`)
+		assert.Contains(t, body, `"name":"模驿"`)
+		assert.Contains(t, body, `"url":"https://myrt.cc/"`)
 	})
 
-	t.Run("returns_unchanged_when_site_name_empty", func(t *testing.T) {
-		html := []byte(`<html><head><title>Sub2API - AI API Gateway</title></head><body></body></html>`)
-		settingsJSON := []byte(`{"site_name":""}`)
+	t.Run("uses_defaults_when_branding_is_empty", func(t *testing.T) {
+		html := []byte(`<html><head><title>Sub2API</title><meta name="description" content="old"><script id="site-structured-data" type="application/ld+json">{}</script></head></html>`)
 
-		result := injectSiteTitle(html, settingsJSON)
+		result := string(injectSiteMetadata(html, []byte(`{}`)))
 
-		assert.Equal(t, string(html), string(result))
+		assert.Contains(t, result, "<title>模驿 - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>")
+		assert.Contains(t, result, seoDefaultDescription)
 	})
 
-	t.Run("returns_unchanged_when_site_name_missing", func(t *testing.T) {
-		html := []byte(`<html><head><title>Sub2API - AI API Gateway</title></head><body></body></html>`)
-		settingsJSON := []byte(`{"other_field":"value"}`)
+	t.Run("returns_unchanged_for_invalid_settings", func(t *testing.T) {
+		html := []byte(`<html><head><title>Sub2API</title></head></html>`)
 
-		result := injectSiteTitle(html, settingsJSON)
+		result := injectSiteMetadata(html, []byte(`{invalid json}`))
 
-		assert.Equal(t, string(html), string(result))
+		assert.Equal(t, html, result)
 	})
 
-	t.Run("returns_unchanged_when_invalid_json", func(t *testing.T) {
-		html := []byte(`<html><head><title>Sub2API - AI API Gateway</title></head><body></body></html>`)
-		settingsJSON := []byte(`{invalid json}`)
+	t.Run("escapes_untrusted_branding", func(t *testing.T) {
+		html := []byte(`<html><head><title>Sub2API</title><meta name="description" content="old"><script id="site-structured-data" type="application/ld+json">{}</script></head></html>`)
+		settingsJSON := []byte(`{"site_name":"</title><script>alert(1)</script>","site_subtitle":"\" onload=\"alert(2)"}`)
 
-		result := injectSiteTitle(html, settingsJSON)
+		result := string(injectSiteMetadata(html, settingsJSON))
 
-		assert.Equal(t, string(html), string(result))
-	})
-
-	t.Run("returns_unchanged_when_no_title_tag", func(t *testing.T) {
-		html := []byte(`<html><head></head><body></body></html>`)
-		settingsJSON := []byte(`{"site_name":"MyCustomSite"}`)
-
-		result := injectSiteTitle(html, settingsJSON)
-
-		assert.Equal(t, string(html), string(result))
-	})
-
-	t.Run("returns_unchanged_when_title_has_attributes", func(t *testing.T) {
-		// The function looks for "<title>" literally, so attributes are not supported
-		// This is acceptable since index.html uses plain <title> without attributes
-		html := []byte(`<html><head><title lang="en">Sub2API</title></head><body></body></html>`)
-		settingsJSON := []byte(`{"site_name":"NewSite"}`)
-
-		result := injectSiteTitle(html, settingsJSON)
-
-		// Should return unchanged since <title> with attributes is not matched
-		assert.Equal(t, string(html), string(result))
-	})
-
-	t.Run("escapes_html_in_site_name", func(t *testing.T) {
-		html := []byte(`<html><head><title>Sub2API - AI API Gateway</title></head><body></body></html>`)
-		settingsJSON := []byte(`{"site_name":"</title><script>alert(1)</script><title>"}`)
-
-		result := injectSiteTitle(html, settingsJSON)
-
-		assert.NotContains(t, string(result), "<script>")
-		assert.Contains(t, string(result), "&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;&lt;title&gt;")
-	})
-
-	t.Run("escapes_ampersand_in_site_name", func(t *testing.T) {
-		html := []byte(`<html><head><title>Sub2API</title></head><body></body></html>`)
-		settingsJSON := []byte(`{"site_name":"A&B"}`)
-
-		result := injectSiteTitle(html, settingsJSON)
-
-		assert.Contains(t, string(result), "<title>A&amp;B - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>")
-	})
-
-	t.Run("preserves_rest_of_html", func(t *testing.T) {
-		html := []byte(`<html><head><meta charset="UTF-8"><title>Sub2API</title><script src="app.js"></script></head><body><div id="app"></div></body></html>`)
-		settingsJSON := []byte(`{"site_name":"TestSite"}`)
-
-		result := injectSiteTitle(html, settingsJSON)
-
-		assert.Contains(t, string(result), `<meta charset="UTF-8">`)
-		assert.Contains(t, string(result), `<script src="app.js"></script>`)
-		assert.Contains(t, string(result), `<div id="app"></div>`)
-		assert.Contains(t, string(result), "<title>TestSite - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>")
+		assert.NotContains(t, result, `<script>alert(1)</script>`)
+		assert.NotContains(t, result, `onload="alert(2)"`)
+		assert.Contains(t, result, `&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;`)
 	})
 }
 
@@ -684,6 +648,24 @@ func TestFrontendServer_Middleware(t *testing.T) {
 		assert.Equal(t, staticAssetsCacheControl, assetWriter.Header().Get("Cache-Control"))
 	})
 
+	t.Run("serves_nested_index_for_directory_routes", func(t *testing.T) {
+		provider := &mockSettingsProvider{settings: map[string]string{"test": "value"}}
+		server, err := NewFrontendServer(provider)
+		require.NoError(t, err)
+
+		router := gin.New()
+		router.Use(server.Middleware())
+
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/docs/", nil)
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
+		assert.Contains(t, w.Body.String(), "Sub2API Docs")
+		assert.NotContains(t, w.Header().Get("Cache-Control"), "immutable")
+	})
+
 	t.Run("serves_search_engine_discovery_files", func(t *testing.T) {
 		provider := &mockSettingsProvider{settings: map[string]string{"test": "value"}}
 		server, err := NewFrontendServer(provider)
@@ -697,8 +679,8 @@ func TestFrontendServer_Middleware(t *testing.T) {
 			contentType string
 			body        string
 		}{
-			{path: "/robots.txt", contentType: "text/plain", body: "Sitemap: https://api.myrt.cc/sitemap.xml"},
-			{path: "/sitemap.xml", contentType: "xml", body: "<loc>https://api.myrt.cc/</loc>"},
+			{path: "/robots.txt", contentType: "text/plain", body: "Sitemap: https://myrt.cc/sitemap.xml"},
+			{path: "/sitemap.xml", contentType: "xml", body: "<loc>https://myrt.cc/</loc>"},
 			{path: "/2dc46cc25defb40506e815a9fe647050.txt", contentType: "text/plain", body: "2dc46cc25defb40506e815a9fe647050"},
 		}
 
@@ -804,6 +786,21 @@ func TestServeEmbeddedFrontend(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
 		assert.Contains(t, w.Body.String(), "<!doctype html>")
+	})
+
+	t.Run("serves_nested_index_for_directory_routes", func(t *testing.T) {
+		middleware := ServeEmbeddedFrontend()
+
+		router := gin.New()
+		router.Use(middleware)
+
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/docs/", nil)
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Header().Get("Content-Type"), "text/html")
+		assert.Contains(t, w.Body.String(), "Sub2API Docs")
 	})
 
 	t.Run("serves_index_html_for_spa_routes", func(t *testing.T) {

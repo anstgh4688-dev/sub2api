@@ -4,37 +4,44 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sub2API - AI API 中转与 Claude、GPT、Gemini 多模型统一网关</title>
+    <meta name="color-scheme" content="dark" />
+    <title>模驿 - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>
     <meta
       name="description"
-      content="Sub2API 提供 Claude、GPT、Gemini 等主流模型的统一 AI API 接入，自建官方订阅号池，支持国内直连、智能调度、会话保持、实时监控与按量计费。"
+      content="模驿提供 Claude、GPT、Gemini 等主流模型的统一 AI API 接入，支持国内直连、智能调度、会话保持、实时监控与按量计费。"
     />
     <meta
       name="keywords"
-      content="AI API,AI API 中转,Claude API,GPT API,Gemini API,API 网关,大模型 API,国内直连,Sub2API"
+      content="AI API,AI API 中转,Claude API,GPT API,Gemini API,API 网关,大模型 API,国内直连,模驿"
     />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <meta name="bingbot" content="index, follow, max-image-preview:large, max-snippet:-1" />
     <meta name="baiduspider" content="index, follow" />
-    <link rel="canonical" href="https://api.myrt.cc/" />
+    <link rel="canonical" href="https://myrt.cc/" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Sub2API" />
-    <meta property="og:title" content="Sub2API - AI API 中转与多模型统一网关" />
+    <meta property="og:site_name" content="模驿" />
+    <meta property="og:title" content="模驿 - AI API 中转与多模型统一网关" />
     <meta
       property="og:description"
       content="一个密钥直连 Claude、GPT、Gemini 等主流模型，自建号池、国内直连、智能调度与实时监控。"
     />
-    <meta property="og:url" content="https://api.myrt.cc/" />
+    <meta property="og:url" content="https://myrt.cc/" />
     <meta property="og:locale" content="zh_CN" />
     <meta property="og:locale:alternate" content="en_US" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Sub2API - Unified AI API Gateway" />
+    <meta property="og:image" content="https://myrt.cc/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="模驿 - AI API 中转与多模型统一网关" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="模驿 - Unified AI API Gateway" />
     <meta
       name="twitter:description"
       content="One API key for Claude, GPT, Gemini and more, with a self-operated account pool, smart routing and live health monitoring."
     />
+    <meta name="twitter:image" content="https://myrt.cc/og-image.png" />
+    <meta name="twitter:image:alt" content="模驿 - AI API 中转与多模型统一网关" />
 
     <script id="site-structured-data" type="application/ld+json" nonce="__CSP_NONCE_VALUE__">
       {
@@ -42,39 +49,46 @@
         "@graph": [
           {
             "@type": "WebSite",
-            "@id": "https://api.myrt.cc/#website",
-            "url": "https://api.myrt.cc/",
-            "name": "Sub2API",
-            "description": "Claude、GPT、Gemini 多模型统一 AI API 网关"
+            "@id": "https://myrt.cc/#website",
+            "url": "https://myrt.cc/",
+            "name": "模驿",
+            "description": "Claude、GPT、Gemini 多模型统一 AI API 网关",
+            "inLanguage": ["zh-CN", "en"]
           },
           {
             "@type": "Organization",
-            "@id": "https://api.myrt.cc/#organization",
-            "url": "https://api.myrt.cc/",
-            "name": "Sub2API",
-            "logo": "https://api.myrt.cc/logo.svg"
+            "@id": "https://myrt.cc/#organization",
+            "url": "https://myrt.cc/",
+            "name": "模驿",
+            "logo": "https://myrt.cc/logo.svg"
           },
           {
             "@type": "SoftwareApplication",
-            "@id": "https://api.myrt.cc/#software",
-            "url": "https://api.myrt.cc/",
-            "name": "Sub2API",
+            "@id": "https://myrt.cc/#software",
+            "url": "https://myrt.cc/",
+            "name": "模驿",
             "applicationCategory": "DeveloperApplication",
             "operatingSystem": "Web",
-            "description": "A unified AI API gateway for Claude, GPT, Gemini and other leading models."
+            "description": "A unified AI API gateway for Claude, GPT, Gemini and other leading models.",
+            "image": "https://myrt.cc/og-image.png"
           }
         ]
       }
     </script>
     <style nonce="__CSP_NONCE_VALUE__">
+      /*
+       * seo-fallback is wrapped in <noscript> so it never flashes for JS users.
+       * The dark variants below only matter when JS is disabled (noscript is rendered).
+       */
       .seo-fallback {
         max-width: 760px;
         margin: 0 auto;
         padding: 72px 24px;
-        color: #17202a;
+        color: #e5e7eb;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         line-height: 1.7;
         letter-spacing: 0;
+        background: #0b1220;
       }
       .seo-fallback h1 {
         margin: 0 0 20px;
@@ -98,11 +112,18 @@
   </head>
   <body>
     <div id="app">
-      <main class="seo-fallback">
-        <h1>Sub2API AI API 中转与多模型统一网关</h1>
-        <p>一个 API 密钥直连 Claude、GPT、Gemini 等主流模型，支持国内免代理访问、智能调度、会话保持、实时监控与按量计费。</p>
-        <p lang="en">One API key connects Claude, GPT, Gemini and other leading AI models through a self-operated account pool with smart routing and live health monitoring.</p>
-      </main>
+      <!--
+        Vue mounts here and replaces #app contents. The noscript block is the
+        SEO / no-JS fallback: search engines (Google/Bing/Baidu) index it,
+        JS-disabled users see it, and JS-enabled users never see it flash.
+      -->
+      <noscript>
+        <main class="seo-fallback">
+          <h1>模驿 AI API 中转与多模型统一网关</h1>
+          <p>一个 API 密钥直连 Claude、GPT、Gemini 等主流模型，支持国内免代理访问、智能调度、会话保持、实时监控与按量计费。</p>
+          <p lang="en">One API key connects Claude, GPT, Gemini and other leading AI models through a self-operated account pool with smart routing and live health monitoring.</p>
+        </main>
+      </noscript>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

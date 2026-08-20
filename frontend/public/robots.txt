@@ -9,6 +9,9 @@ Disallow: /auth/
 Disallow: /setup
 Disallow: /login
 Disallow: /register
+Disallow: /email-verify
+Disallow: /forgot-password
+Disallow: /reset-password
 Disallow: /dashboard
 Disallow: /keys
 Disallow: /usage
@@ -17,5 +20,8 @@ Disallow: /orders
 Disallow: /purchase
 Disallow: /payment/
 Disallow: /subscriptions
+Disallow: /redeem
+Disallow: /key-usage
+Disallow: /image-generation
 
-Sitemap: https://api.myrt.cc/sitemap.xml
+Sitemap: https://myrt.cc/sitemap.xml

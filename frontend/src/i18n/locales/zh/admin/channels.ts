@@ -700,6 +700,7 @@ export default {
         searchPlaceholder: '搜索用户邮箱',
         dailyUsage: '日用量',
         weeklyUsage: '周用量',
+        monthlyUsage: '月用量',
         ofLimit: '/ {limit}',
         noActiveSubscriptions: '暂无活跃订阅'
       },
@@ -767,6 +768,7 @@ export default {
       resetQuotaConfirm: "请选择要为 '{user}' 重置的限额。所选周期的用量将归零并从今天重新计算，未选择周期的用量保持不变。",
       resetDailyQuota: '重置日限额',
       resetWeeklyQuota: '重置周限额',
+      resetMonthlyQuota: '重置月限额',
       resetAllQuota: '全部重置',
       quotaResetSuccess: '配额重置成功',
       failedToResetQuota: '重置配额失败',

@@ -20,7 +20,7 @@ interface TurnstileRenderOptions {
   callback: (token: string) => void
   'expired-callback'?: () => void
   'error-callback'?: () => void
-  theme?: 'light' | 'dark' | 'auto'
+  theme?: 'dark'
   size?: 'normal' | 'compact' | 'flexible'
 }
 
@@ -40,11 +40,11 @@ declare global {
 const props = withDefaults(
   defineProps<{
     siteKey: string
-    theme?: 'light' | 'dark' | 'auto'
+    theme?: 'dark'
     size?: 'normal' | 'compact' | 'flexible'
   }>(),
   {
-    theme: 'auto',
+    theme: 'dark',
     size: 'flexible'
   }
 )
@@ -126,7 +126,7 @@ const renderWidget = () => {
     'error-callback': () => {
       emit('error')
     },
-    theme: props.theme,
+    theme: 'dark',
     size: props.size
   })
 }

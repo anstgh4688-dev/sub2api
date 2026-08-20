@@ -23,8 +23,12 @@ import (
 
 const (
 	// NonceHTMLPlaceholder is the placeholder for nonce in HTML script tags
-	NonceHTMLPlaceholder = "__CSP_NONCE_VALUE__"
-	frontendNoIndexValue = "noindex, nofollow, noarchive"
+	NonceHTMLPlaceholder  = "__CSP_NONCE_VALUE__"
+	frontendNoIndexValue  = "noindex, nofollow, noarchive"
+	seoSiteOrigin         = "https://myrt.cc"
+	seoShareImageURL      = seoSiteOrigin + "/og-image.png"
+	seoDefaultSiteName    = "模驿"
+	seoDefaultDescription = "模驿提供 Claude、GPT、Gemini 等主流模型的统一 AI API 接入，支持国内直连、智能调度、会话保持、实时监控与按量计费。"
 )
 
 //go:embed all:dist
@@ -100,32 +104,46 @@ func (s *FrontendServer) Middleware() gin.HandlerFunc {
 			cleanPath = "index.html"
 		}
 
+		staticPath, staticFileExists := resolveEmbeddedStaticPath(s.distFS, cleanPath)
+
 		// For index.html or SPA routes, serve with injected settings
-		if cleanPath == "index.html" || !s.fileExists(cleanPath) {
+		if cleanPath == "index.html" || !staticFileExists {
 			applyFrontendIndexingHeader(c, path)
 			s.serveIndexHTML(c)
 			return
 		}
 
 		// Try local override first
-		if s.tryServeOverride(c, cleanPath) {
+		if s.tryServeOverride(c, staticPath) {
 			return
 		}
 
 		// Serve static files normally (hashed assets get long-lived cache headers)
-		applyStaticAssetCacheHeaders(c.Writer.Header(), cleanPath)
+		applyStaticAssetCacheHeaders(c.Writer.Header(), staticPath)
 		s.fileServer.ServeHTTP(c.Writer, c.Request)
 		c.Abort()
 	}
 }
 
-func (s *FrontendServer) fileExists(path string) bool {
-	file, err := s.distFS.Open(path)
-	if err != nil {
-		return false
+func resolveEmbeddedStaticPath(distFS fs.FS, cleanPath string) (string, bool) {
+	candidates := []string{cleanPath}
+	if strings.HasSuffix(cleanPath, "/") {
+		candidates = []string{
+			cleanPath + "index.html",
+			strings.TrimSuffix(cleanPath, "/"),
+		}
 	}
-	_ = file.Close()
-	return true
+
+	for _, candidate := range candidates {
+		file, err := distFS.Open(candidate)
+		if err != nil {
+			continue
+		}
+		_ = file.Close()
+		return candidate, true
+	}
+
+	return cleanPath, false
 }
 
 // tryServeOverride checks if a local override file exists and serves it.
@@ -213,9 +231,144 @@ func (s *FrontendServer) injectSettings(settingsJSON []byte) []byte {
 	result := bytes.Replace(s.baseHTML, headClose, append(script, headClose...), 1)
 
 	// Apply custom branding before the browser paints the static defaults.
-	result = injectSiteTitle(result, settingsJSON)
+	result = injectSiteMetadata(result, settingsJSON)
 	result = injectSiteFavicon(result, settingsJSON)
 
+	return result
+}
+
+type seoSettings struct {
+	SiteName     string `json:"site_name"`
+	SiteSubtitle string `json:"site_subtitle"`
+}
+
+func injectSiteMetadata(document, settingsJSON []byte) []byte {
+	cfg := seoSettings{}
+	if err := json.Unmarshal(settingsJSON, &cfg); err != nil {
+		return document
+	}
+
+	siteName := strings.TrimSpace(cfg.SiteName)
+	if siteName == "" {
+		siteName = seoDefaultSiteName
+	}
+	description := strings.TrimSpace(cfg.SiteSubtitle)
+	if description == "" {
+		description = seoDefaultDescription
+	}
+	title := siteName + " - AI API 中转 | Claude、GPT、Gemini 多模型网关"
+
+	document = replaceElementContent(document, "title", htmlpkg.EscapeString(title))
+	document = replaceMetaContent(document, "name", "description", description)
+	document = replaceMetaContent(document, "property", "og:site_name", siteName)
+	document = replaceMetaContent(document, "property", "og:title", title)
+	document = replaceMetaContent(document, "property", "og:description", description)
+	document = replaceMetaContent(document, "name", "twitter:title", title)
+	document = replaceMetaContent(document, "name", "twitter:description", description)
+	return replaceStructuredData(document, siteName, description)
+}
+
+func replaceElementContent(document []byte, element, content string) []byte {
+	open := []byte("<" + element + ">")
+	close := []byte("</" + element + ">")
+	start := bytes.Index(document, open)
+	end := bytes.Index(document, close)
+	if start == -1 || end == -1 || end < start {
+		return document
+	}
+	end += len(close)
+	replacement := []byte("<" + element + ">" + content + "</" + element + ">")
+	return replaceByteRange(document, start, end, replacement)
+}
+
+func replaceMetaContent(document []byte, attribute, value, content string) []byte {
+	needle := []byte(attribute + `="` + value + `"`)
+	attributeIndex := bytes.Index(document, needle)
+	if attributeIndex == -1 {
+		return document
+	}
+	start := bytes.LastIndex(document[:attributeIndex], []byte("<meta"))
+	if start == -1 {
+		return document
+	}
+	endOffset := bytes.IndexByte(document[attributeIndex:], '>')
+	if endOffset == -1 {
+		return document
+	}
+	end := attributeIndex + endOffset + 1
+	contentAttribute := []byte(`content="`)
+	contentStartOffset := bytes.Index(document[start:end], contentAttribute)
+	if contentStartOffset == -1 {
+		return document
+	}
+	contentStart := start + contentStartOffset + len(contentAttribute)
+	contentEndOffset := bytes.IndexByte(document[contentStart:end], '"')
+	if contentEndOffset == -1 {
+		return document
+	}
+	contentEnd := contentStart + contentEndOffset
+	return replaceByteRange(document, contentStart, contentEnd, []byte(htmlpkg.EscapeString(content)))
+}
+
+func replaceStructuredData(document []byte, siteName, description string) []byte {
+	needle := []byte(`<script id="site-structured-data"`)
+	start := bytes.Index(document, needle)
+	if start == -1 {
+		return document
+	}
+	openEndOffset := bytes.IndexByte(document[start:], '>')
+	if openEndOffset == -1 {
+		return document
+	}
+	contentStart := start + openEndOffset + 1
+	contentEndOffset := bytes.Index(document[contentStart:], []byte("</script>"))
+	if contentEndOffset == -1 {
+		return document
+	}
+	contentEnd := contentStart + contentEndOffset
+
+	structuredData := map[string]any{
+		"@context": "https://schema.org",
+		"@graph": []any{
+			map[string]any{
+				"@type":       "WebSite",
+				"@id":         seoSiteOrigin + "/#website",
+				"url":         seoSiteOrigin + "/",
+				"name":        siteName,
+				"description": description,
+				"inLanguage":  []string{"zh-CN", "en"},
+			},
+			map[string]any{
+				"@type": "Organization",
+				"@id":   seoSiteOrigin + "/#organization",
+				"url":   seoSiteOrigin + "/",
+				"name":  siteName,
+				"logo":  seoSiteOrigin + "/logo.svg",
+			},
+			map[string]any{
+				"@type":               "SoftwareApplication",
+				"@id":                 seoSiteOrigin + "/#software",
+				"url":                 seoSiteOrigin + "/",
+				"name":                siteName,
+				"applicationCategory": "DeveloperApplication",
+				"operatingSystem":     "Web",
+				"description":         description,
+				"image":               seoShareImageURL,
+			},
+		},
+	}
+	payload, err := json.Marshal(structuredData)
+	if err != nil {
+		return document
+	}
+	return replaceByteRange(document, contentStart, contentEnd, payload)
+}
+
+func replaceByteRange(document []byte, start, end int, replacement []byte) []byte {
+	result := make([]byte, 0, len(document)-(end-start)+len(replacement))
+	result = append(result, document[:start]...)
+	result = append(result, replacement...)
+	result = append(result, document[end:]...)
 	return result
 }
 
@@ -270,31 +423,6 @@ func safeImageURL(value string) string {
 	return trimmed
 }
 
-// injectSiteTitle replaces the static <title> in HTML with the configured site name.
-// This ensures the browser tab shows the correct title before JS executes.
-func injectSiteTitle(html, settingsJSON []byte) []byte {
-	var cfg struct {
-		SiteName string `json:"site_name"`
-	}
-	if err := json.Unmarshal(settingsJSON, &cfg); err != nil || cfg.SiteName == "" {
-		return html
-	}
-
-	// Find and replace the existing <title>...</title>
-	titleStart := bytes.Index(html, []byte("<title>"))
-	titleEnd := bytes.Index(html, []byte("</title>"))
-	if titleStart == -1 || titleEnd == -1 || titleEnd <= titleStart {
-		return html
-	}
-
-	newTitle := []byte("<title>" + htmlpkg.EscapeString(cfg.SiteName) + " - AI API 中转 | Claude、GPT、Gemini 多模型网关</title>")
-	var buf bytes.Buffer
-	buf.Write(html[:titleStart])
-	buf.Write(newTitle)
-	buf.Write(html[titleEnd+len("</title>"):])
-	return buf.Bytes()
-}
-
 // replaceNoncePlaceholder replaces the nonce placeholder with actual nonce value
 func replaceNoncePlaceholder(html []byte, nonce string) []byte {
 	return bytes.ReplaceAll(html, []byte(NonceHTMLPlaceholder), []byte(nonce))
@@ -323,16 +451,16 @@ func ServeEmbeddedFrontend() gin.HandlerFunc {
 			cleanPath = "index.html"
 		}
 
-		if file, err := distFS.Open(cleanPath); err == nil {
-			_ = file.Close()
+		staticPath, staticFileExists := resolveEmbeddedStaticPath(distFS, cleanPath)
+		if staticFileExists {
 			if cleanPath == "index.html" {
 				applyFrontendIndexingHeader(c, path)
 			}
 			// Try local override first
-			if tryServeOverrideFile(c, overrideDir, cleanPath) {
+			if tryServeOverrideFile(c, overrideDir, staticPath) {
 				return
 			}
-			applyStaticAssetCacheHeaders(c.Writer.Header(), cleanPath)
+			applyStaticAssetCacheHeaders(c.Writer.Header(), staticPath)
 			fileServer.ServeHTTP(c.Writer, c.Request)
 			c.Abort()
 			return

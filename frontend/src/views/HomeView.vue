@@ -40,14 +40,6 @@
           >
             <Icon name="book" size="md" />
           </a>
-          <button
-            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-dark-400 dark:hover:bg-dark-800"
-            :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
-            @click="toggleTheme"
-          >
-            <Icon v-if="isDark" name="sun" size="md" />
-            <Icon v-else name="moon" size="md" />
-          </button>
           <router-link
             :to="isAuthenticated ? dashboardPath : '/login'"
             class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
@@ -117,17 +109,6 @@
             <Icon name="book" size="sm" />
           </a>
 
-          <button
-            type="button"
-            class="header-icon"
-            :title="isDark ? t('home.switchToLight') : t('home.switchToDark')"
-            :aria-label="isDark ? t('home.switchToLight') : t('home.switchToDark')"
-            @click="toggleTheme"
-          >
-            <Icon v-if="isDark" name="sun" size="sm" />
-            <Icon v-else name="moon" size="sm" />
-          </button>
-
           <router-link
             :to="isAuthenticated ? dashboardPath : '/login'"
             class="header-cta"
@@ -173,6 +154,15 @@
                 <span>{{ isAuthenticated ? t('home.goToDashboard') : t('home.getStarted') }}</span>
                 <Icon name="arrowRight" size="sm" :stroke-width="2" />
               </router-link>
+              <a
+                :href="modelPriceUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="primary-action primary-action--price"
+              >
+                <span>{{ t('home.modes.viewPrice') }}</span>
+                <Icon name="arrowRight" size="sm" :stroke-width="2" />
+              </a>
               <a
                 v-if="docUrl"
                 :href="docUrl"
@@ -401,39 +391,38 @@
         </div>
       </section>
 
-      <!-- ============ COMPARISON ============ -->
-      <section class="compare-section">
+      <!-- ============ USAGE MODES ============ -->
+      <section class="modes-section">
         <div class="section-heading section-heading--center">
-          <span class="section-index">06 / COMPARISON</span>
-          <h2>{{ t('home.comparison.title') }}</h2>
+          <span class="section-index">06 / USAGE MODES</span>
+          <h2>{{ t('home.modes.title') }}</h2>
+          <p>{{ t('home.modes.subtitle') }}</p>
         </div>
 
-        <div class="compare-frame">
-          <table class="compare-table">
-            <caption class="sr-only">{{ t('home.comparison.title') }}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{{ t('home.comparison.headers.feature') }}</th>
-                <th scope="col">{{ t('home.comparison.headers.official') }}</th>
-                <th scope="col" class="compare-col-us">
-                  <span class="compare-us-tag">{{ t('home.comparison.headers.us') }}</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in comparisonRows" :key="row">
-                <th scope="row">{{ t(`home.comparison.items.${row}.feature`) }}</th>
-                <td :data-label="t('home.comparison.headers.official')">
-                  <Icon name="x" size="xs" :stroke-width="2" class="compare-mark compare-mark--no" />
-                  <span>{{ t(`home.comparison.items.${row}.official`) }}</span>
-                </td>
-                <td class="compare-col-us" :data-label="t('home.comparison.headers.us')">
-                  <Icon name="check" size="xs" :stroke-width="2" class="compare-mark compare-mark--yes" />
-                  <span>{{ t(`home.comparison.items.${row}.us`) }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="modes-grid">
+          <article
+            v-for="mode in usageModes"
+            :key="mode.id"
+            class="mode-card"
+            :class="`mode-card--${mode.tone}`"
+          >
+            <header class="mode-head">
+              <span class="mode-no">{{ mode.id }}</span>
+              <span class="mode-kicker">{{ t(mode.kicker) }}</span>
+            </header>
+            <h3 class="mode-title">{{ t(mode.title) }}</h3>
+            <p class="mode-lede">{{ t(mode.lede) }}</p>
+            <ul class="mode-points">
+              <li v-for="(p, i) in mode.points" :key="i">
+                <span class="mode-point-no">{{ String(i + 1).padStart(2, '0') }}</span>
+                <div class="mode-point-body">
+                  <span class="mode-point-tag">{{ t(p.tag) }}</span>
+                  <strong class="mode-point-title">{{ t(p.title) }}</strong>
+                  <span class="mode-point-desc">{{ t(p.desc) }}</span>
+                </div>
+              </li>
+            </ul>
+          </article>
         </div>
       </section>
 
@@ -496,7 +485,58 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const appStore = useAppStore()
 
-const comparisonRows = ['pricing', 'models', 'management', 'stability', 'control'] as const
+const modelPriceUrl = 'https://pay.ldxp.cn/shop/MTZ1W37Y'
+
+const usageModes = [
+  {
+    id: '01',
+    tone: 'subscription',
+    kicker: 'home.modes.subscription.kicker',
+    title: 'home.modes.subscription.title',
+    lede: 'home.modes.subscription.lede',
+    points: [
+      {
+        tag: 'home.modes.subscription.p1.tag',
+        title: 'home.modes.subscription.p1.title',
+        desc: 'home.modes.subscription.p1.desc'
+      },
+      {
+        tag: 'home.modes.subscription.p2.tag',
+        title: 'home.modes.subscription.p2.title',
+        desc: 'home.modes.subscription.p2.desc'
+      },
+      {
+        tag: 'home.modes.subscription.p3.tag',
+        title: 'home.modes.subscription.p3.title',
+        desc: 'home.modes.subscription.p3.desc'
+      }
+    ]
+  },
+  {
+    id: '02',
+    tone: 'api',
+    kicker: 'home.modes.api.kicker',
+    title: 'home.modes.api.title',
+    lede: 'home.modes.api.lede',
+    points: [
+      {
+        tag: 'home.modes.api.p1.tag',
+        title: 'home.modes.api.p1.title',
+        desc: 'home.modes.api.p1.desc'
+      },
+      {
+        tag: 'home.modes.api.p2.tag',
+        title: 'home.modes.api.p2.title',
+        desc: 'home.modes.api.p2.desc'
+      },
+      {
+        tag: 'home.modes.api.p3.tag',
+        title: 'home.modes.api.p3.title',
+        desc: 'home.modes.api.p3.desc'
+      }
+    ]
+  }
+] as const
 
 const heroStats = [
   { value: '100%', labelKey: 'home.stats.selfOperated' },
@@ -641,7 +681,6 @@ const isHomeContentUrl = computed(() => {
   return content.startsWith('http://') || content.startsWith('https://')
 })
 
-const isDark = ref(document.documentElement.classList.contains('dark'))
 const sceneOffset = ref({ x: 0, y: 0 })
 
 const githubUrl = 'https://github.com/Wei-Shaw/sub2api'
@@ -662,22 +701,6 @@ const userInitial = computed(() => {
 })
 
 const currentYear = computed(() => new Date().getFullYear())
-
-function toggleTheme() {
-  isDark.value = !isDark.value
-  document.documentElement.classList.toggle('dark', isDark.value)
-  localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
-}
-
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme')
-  // The landing page is designed dark-first (cosmic backdrop, meteors); only
-  // an explicit light preference from the toggle opts out.
-  if (savedTheme !== 'light') {
-    isDark.value = true
-    document.documentElement.classList.add('dark')
-  }
-}
 
 function handleScenePointerMove(event: PointerEvent) {
   if (
@@ -703,7 +726,6 @@ function resetSceneOffset() {
 }
 
 onMounted(() => {
-  initTheme()
   startRouteRotation()
   authStore.checkAuth()
 
@@ -718,7 +740,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-html.dark .home-shell {
+.home-shell {
   --home-bg: #020409;
   --home-bg-soft: #050a16;
   --home-surface: rgba(10, 16, 32, 0.6);
@@ -754,51 +776,6 @@ html.dark .home-shell {
   --home-aurora-b: rgba(129, 140, 248, 0.15);
   --home-aurora-c: rgba(45, 212, 191, 0.1);
   --home-inset-hi: rgba(255, 255, 255, 0.06);
-}
-
-html.dark .home-shell .pool-platform--openai,
-html.dark .home-shell .orbit-node-badge--openai,
-html.dark .home-shell .provider-icon--openai {
-  color: #f4f7f6;
-}
-
-.home-shell {
-  --home-bg: #f5f8fd;
-  --home-bg-soft: #eef3fb;
-  --home-surface: rgba(255, 255, 255, 0.72);
-  --home-surface-solid: #ffffff;
-  --home-surface-strong: rgba(255, 255, 255, 0.92);
-  /* Opaque-enough card fill: replaces backdrop-filter on the repeated grids. */
-  --home-card: rgba(255, 255, 255, 0.88);
-  --home-text: #0d1830;
-  --home-muted: #49597c;
-  /* 5.0:1 on --home-bg, 5.4:1 on white (was #7d8cab → 3.2:1) */
-  --home-faint: #5b6b8c;
-  --home-border: rgba(37, 78, 160, 0.13);
-  --home-border-strong: rgba(37, 78, 160, 0.24);
-  --home-grid: rgba(37, 78, 160, 0.07);
-  /* --home-accent-a is also used as text; --home-accent-fill keeps the brighter
-     original hue for gradients/glows where contrast rules do not apply. */
-  --home-accent-a: #0369a1;
-  --home-accent-fill: #0284c7;
-  --home-accent-b: #4f46e5;
-  /* Text colour placed on top of the accent gradient. */
-  --home-on-accent: #ffffff;
-  --home-accent-soft: rgba(2, 132, 199, 0.1);
-  --home-accent-glow: rgba(2, 132, 199, 0.2);
-  --home-accent-b-soft: rgba(99, 102, 241, 0.1);
-  --home-accent-b-glow: rgba(99, 102, 241, 0.2);
-  --home-ok: #047857;
-  --home-ok-soft: rgba(5, 150, 105, 0.12);
-  --home-code: #12294a;
-  --home-title-from: #0d1830;
-  --home-title-mid: #24448c;
-  --home-title-to: #3d63e0;
-  --home-shadow: 0 30px 80px rgba(13, 38, 76, 0.1);
-  --home-aurora-a: rgba(2, 132, 199, 0.1);
-  --home-aurora-b: rgba(99, 102, 241, 0.09);
-  --home-aurora-c: rgba(13, 148, 136, 0.07);
-  --home-inset-hi: rgba(255, 255, 255, 0.8);
   position: relative;
   min-height: 100vh;
   overflow: hidden;
@@ -806,6 +783,12 @@ html.dark .home-shell .provider-icon--openai {
   color: var(--home-text);
   font-family: 'Avenir Next', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   letter-spacing: 0;
+}
+
+.home-shell .pool-platform--openai,
+.home-shell .orbit-node-badge--openai,
+.home-shell .provider-icon--openai {
+  color: #f4f7f6;
 }
 
 .home-shell *,
@@ -825,9 +808,8 @@ html.dark .home-shell .provider-icon--openai {
   contain: layout paint style;
 }
 
-/* Deep-space gradient only exists in the dark theme; the light theme keeps
-   its clean flat background. */
-html.dark .aurora-field {
+/* The landing page is intentionally deep-space in the only supported theme. */
+.home-shell .aurora-field {
   background:
     radial-gradient(1100px 760px at 80% -12%, rgba(56, 189, 248, 0.09), transparent 62%),
     radial-gradient(900px 640px at 6% 110%, rgba(129, 140, 248, 0.08), transparent 60%),
@@ -1195,6 +1177,12 @@ main {
     inset 0 1px 0 rgba(255, 255, 255, 0.24),
     0 10px 32px var(--home-accent-glow),
     0 4px 14px var(--home-accent-b-glow);
+}
+
+/* Equalize the two hero primary buttons (立即开始 / 模型价格) so they sit
+   side by side at the same width. */
+.hero-actions .primary-action {
+  min-width: 168px;
 }
 
 .primary-action::after {
@@ -1606,7 +1594,7 @@ main {
 .steps-section,
 .capability-section,
 .provider-section,
-.compare-section,
+.modes-section,
 .cta-section {
   width: min(1200px, calc(100% - 48px));
   margin: 0 auto;
@@ -1858,88 +1846,136 @@ main {
   animation-delay: 1.3s;
 }
 
-/* ============ Comparison ============ */
-.compare-section {
+/* ============ Usage Modes ============ */
+.modes-section {
   padding: 0 0 120px;
 }
 
-.compare-frame {
-  overflow-x: auto;
+.modes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.mode-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 36px;
   border: 1px solid var(--home-border-strong);
   border-radius: 20px;
   background: var(--home-surface-solid);
   box-shadow: inset 0 1px 0 var(--home-inset-hi), var(--home-shadow);
 }
 
-.compare-table {
-  width: 100%;
-  min-width: 620px;
-  border-collapse: collapse;
-  text-align: left;
+.mode-card--subscription::before,
+.mode-card--api::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(90deg, var(--home-accent-a), var(--home-accent-b));
 }
 
-.compare-table thead th {
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--home-border-strong);
-  color: var(--home-muted);
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.compare-us-tag {
-  display: inline-flex;
+.mode-head {
+  display: flex;
   align-items: center;
-  padding: 5px 12px;
-  border-radius: 999px;
+  gap: 16px;
+}
+
+.mode-no {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
   background: linear-gradient(135deg, var(--home-accent-a), var(--home-accent-b));
-  color: var(--home-on-accent);
-  font-size: 12.5px;
-  font-weight: 700;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-.compare-table tbody th {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--home-border);
-  color: var(--home-text);
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.compare-table tbody td {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--home-border);
-  color: var(--home-muted);
-  font-size: 13.5px;
-  line-height: 1.6;
-  vertical-align: top;
-}
-
-.compare-table tbody tr:last-child :is(th, td) {
-  border-bottom: 0;
-}
-
-.compare-mark {
-  margin-right: 8px;
-  vertical-align: -2px;
-}
-
-.compare-mark--no {
+.mode-kicker {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
   color: var(--home-faint);
 }
 
-.compare-mark--yes {
-  color: var(--home-ok);
-}
-
-.compare-table .compare-col-us {
-  background: color-mix(in srgb, var(--home-accent-soft) 55%, transparent);
-}
-
-.compare-table tbody .compare-col-us {
+.mode-title {
+  margin: 0;
   color: var(--home-text);
-  font-weight: 650;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.mode-lede {
+  margin: 0;
+  color: var(--home-muted);
+  font-size: 14.5px;
+  line-height: 1.7;
+}
+
+.mode-points {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--home-border);
+}
+
+.mode-points li {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--home-border);
+}
+
+.mode-points li:last-child {
+  border-bottom: 0;
+}
+
+.mode-point-no {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.6;
+  color: var(--home-faint);
+}
+
+.mode-point-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mode-point-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--home-accent-a);
+}
+
+.mode-point-title {
+  color: var(--home-text);
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.mode-point-desc {
+  color: var(--home-muted);
+  font-size: 13.5px;
+  line-height: 1.65;
 }
 
 /* ============ Capabilities ============ */
@@ -2385,7 +2421,7 @@ main {
   .steps-section,
   .capability-section,
   .provider-section,
-  .compare-section,
+  .modes-section,
   .cta-section,
   .footer-inner {
     width: min(100% - 32px, 1200px);
@@ -2493,7 +2529,7 @@ main {
   .direct-section,
   .capability-section,
   .provider-section,
-  .compare-section {
+  .modes-section {
     padding-bottom: 88px;
   }
 
@@ -2506,73 +2542,16 @@ main {
     letter-spacing: 0.12em;
   }
 
-  /* A 3-column table cannot fit a phone; stacking keeps the "us" column
-     visible instead of parking it off-screen behind a horizontal scroll. */
-  .compare-frame {
-    overflow: visible;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
+  .modes-grid {
+    grid-template-columns: 1fr;
   }
 
-  .compare-table {
-    min-width: 0;
+  .mode-card {
+    padding: 28px 22px;
   }
 
-  .compare-table thead {
-    display: none;
-  }
-
-  .compare-table,
-  .compare-table tbody,
-  .compare-table tbody tr,
-  .compare-table tbody th,
-  .compare-table tbody td {
-    display: block;
-  }
-
-  .compare-table tbody tr {
-    overflow: hidden;
-    margin-bottom: 12px;
-    border: 1px solid var(--home-border);
-    border-radius: 16px;
-    background: var(--home-card);
-  }
-
-  .compare-table tbody th {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--home-border);
-    white-space: normal;
-  }
-
-  .compare-table tbody tr:last-child th {
-    border-bottom: 1px solid var(--home-border);
-  }
-
-  .compare-table tbody td {
-    display: flex;
-    gap: 8px;
-    padding: 11px 16px;
-    border-bottom: 0;
-    font-size: 13px;
-  }
-
-  .compare-table tbody td:last-child {
-    padding-bottom: 15px;
-  }
-
-  .compare-table tbody td::before {
-    flex: 0 0 68px;
-    color: var(--home-faint);
-    content: attr(data-label);
-    font-size: 12px;
-    font-weight: 650;
-  }
-
-  .compare-mark {
-    flex: 0 0 auto;
-    margin-right: 0;
-    margin-top: 3px;
+  .mode-title {
+    font-size: 22px;
   }
 
   .provider-chip {
@@ -2611,7 +2590,7 @@ main {
   .steps-section,
   .capability-section,
   .provider-section,
-  .compare-section,
+  .modes-section,
   .cta-section,
   .footer-inner {
     width: min(100% - 24px, 1200px);

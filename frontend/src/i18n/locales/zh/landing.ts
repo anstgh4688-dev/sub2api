@@ -171,6 +171,52 @@ export default {
         }
       }
     },
+    // 使用模式
+    modes: {
+      title: '两种使用方式，按需选择',
+      subtitle: '订阅模式摊薄上游成本，API 计费按量即付——同一套高可用底座，两种计费形态。',
+      viewPrice: '模型价格',
+      subscription: {
+        kicker: 'SUBSCRIPTION MODE',
+        title: '订阅模式 · 按月摊薄成本',
+        lede: '适合稳定调用与团队批量使用：把高质量账号的固定成本摊到日 / 周 / 月订阅里，用得多越划算。',
+        p1: {
+          tag: 'COST SHARING',
+          title: '订阅分发摊薄固定成本',
+          desc: '按日 / 周 / 月订阅分发上游账号成本，不牺牲上游质量也能压低使用门槛。'
+        },
+        p2: {
+          tag: 'BUDGET FRIENDLY',
+          title: '月费封顶，用量可控',
+          desc: '套餐内无限量调用，按月结算不必再为单次峰值买单，预算更可控。'
+        },
+        p3: {
+          tag: 'TEAM READY',
+          title: '团队账号一键共享',
+          desc: '为团队成员一键派发子密钥，按角色限额与用量分层，无需各自注册。'
+        }
+      },
+      api: {
+        kicker: 'API BILLING MODE',
+        title: 'API 计费 · 用多少付多少',
+        lede: '适合临时验证、轻量脚本与试用场景：先拿到密钥、调通流程，再按 token 量计费，用多少付多少。',
+        p1: {
+          tag: 'PAY AS YOU GO',
+          title: '按 token 实时计费',
+          desc: '调用完才结算，精确到 token；余额充足即可持续调用，无最低消费。'
+        },
+        p2: {
+          tag: 'INSTANT ACTIVATION',
+          title: '充值即用，无需等分发',
+          desc: '在线充值后立刻获得可用密钥，跳过订阅分发与排程，验证想法更快。'
+        },
+        p3: {
+          tag: 'TRANSPARENT USAGE',
+          title: '用量透明，随时可查',
+          desc: '后台实时面板查看每次调用的 token 与费用明细，预算与流向一目了然。'
+        }
+      }
+    },
     providers: {
       title: '已支持的 AI 模型',
       description: '一个 API，多种选择',

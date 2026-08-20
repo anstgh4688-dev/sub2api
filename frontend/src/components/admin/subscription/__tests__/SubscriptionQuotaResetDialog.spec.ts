@@ -65,7 +65,7 @@ const BaseDialogStub = defineComponent({
   `
 })
 
-const mountDialog = (scopes?: Array<'daily' | 'weekly' | 'all'>) =>
+const mountDialog = (scopes?: Array<'daily' | 'weekly' | 'monthly' | 'all'>) =>
   mount(SubscriptionQuotaResetDialog, {
     props: {
       show: true,
@@ -90,6 +90,7 @@ describe('SubscriptionQuotaResetDialog', () => {
   it.each([
     ['reset-quota-daily', { daily: true, weekly: false, monthly: false }],
     ['reset-quota-weekly', { daily: false, weekly: true, monthly: false }],
+    ['reset-quota-monthly', { daily: false, weekly: false, monthly: true }],
     ['reset-quota-all', { daily: true, weekly: true, monthly: true }]
   ])('submits the %s payload', async (selector, payload) => {
     const wrapper = mountDialog()
@@ -109,6 +110,7 @@ describe('SubscriptionQuotaResetDialog', () => {
 
     expect(wrapper.find('[data-test="reset-quota-daily"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="reset-quota-weekly"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="reset-quota-monthly"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="reset-quota-all"]').exists()).toBe(false)
   })
 
@@ -128,6 +130,7 @@ describe('SubscriptionQuotaResetDialog', () => {
       'reset-quota-cancel',
       'reset-quota-daily',
       'reset-quota-weekly',
+      'reset-quota-monthly',
       'reset-quota-all'
     ]) {
       expect(wrapper.get(`[data-test="${selector}"]`).attributes()).toHaveProperty('disabled')
