@@ -115,6 +115,13 @@
             />
           </template>
 
+          <template #cell-monthly="{ row }">
+            <QuotaUsageMeter
+              :used="row.monthly_usage_usd"
+              :limit="row.group?.monthly_limit_usd"
+            />
+          </template>
+
           <template #cell-expires="{ row }">
             <span v-if="row.expires_at" class="whitespace-nowrap text-gray-700 dark:text-gray-300">
               {{ formatDateOnly(row.expires_at) }}
@@ -188,7 +195,7 @@ import SubscriptionQuotaResetDialog from '@/components/admin/subscription/Subscr
 const { t } = useI18n()
 const appStore = useAppStore()
 
-const quotaScopes: Array<'daily' | 'weekly'> = ['daily', 'weekly']
+const quotaScopes: Array<'daily' | 'weekly' | 'monthly'> = ['daily', 'weekly', 'monthly']
 const subscriptions = ref<UserSubscription[]>([])
 const loading = ref(false)
 const userKeyword = ref('')
@@ -212,6 +219,7 @@ const columns = computed<Column[]>(() => [
   { key: 'group', label: t('admin.subscriptions.columns.group') },
   { key: 'daily', label: t('admin.subscriptions.quotaResetPage.dailyUsage') },
   { key: 'weekly', label: t('admin.subscriptions.quotaResetPage.weeklyUsage') },
+  { key: 'monthly', label: t('admin.subscriptions.quotaResetPage.monthlyUsage') },
   { key: 'expires', label: t('admin.subscriptions.columns.expires') },
   { key: 'actions', label: t('admin.subscriptions.columns.actions'), class: 'text-right' }
 ])

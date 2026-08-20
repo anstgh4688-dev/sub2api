@@ -49,6 +49,18 @@ describe('applyRouteSeo', () => {
     expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toContain('index, follow')
     expect(document.querySelector('link[rel="canonical"]')?.getAttribute('href')).toBe(`${SEO_SITE_ORIGIN}/`)
     expect(document.querySelector('meta[property="og:url"]')?.getAttribute('content')).toBe(`${SEO_SITE_ORIGIN}/`)
+    expect(document.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(
+      `${SEO_SITE_ORIGIN}/og-image.png`,
+    )
+    expect(document.querySelector('meta[property="og:image:alt"]')?.getAttribute('content')).toBe(
+      'Sub2API - AI API 中转与多模型统一网关',
+    )
+    expect(document.querySelector('meta[name="twitter:card"]')?.getAttribute('content')).toBe(
+      'summary_large_image',
+    )
+    expect(document.querySelector('meta[name="twitter:image"]')?.getAttribute('content')).toBe(
+      `${SEO_SITE_ORIGIN}/og-image.png`,
+    )
 
     const structuredData = JSON.parse(document.querySelector('#site-structured-data')?.textContent ?? '{}')
     expect(structuredData['@graph']).toEqual(
@@ -79,5 +91,7 @@ describe('applyRouteSeo', () => {
     expect(document.querySelector('link[rel="canonical"]')).toBeNull()
     expect(document.querySelector('#site-structured-data')).toBeNull()
     expect(document.querySelector('meta[property="og:url"]')).toBeNull()
+    expect(document.querySelector('meta[property="og:image"]')).toBeNull()
+    expect(document.querySelector('meta[name="twitter:image"]')).toBeNull()
   })
 })

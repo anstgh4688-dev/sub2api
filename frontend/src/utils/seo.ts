@@ -1,6 +1,7 @@
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 
-export const SEO_SITE_ORIGIN = 'https://api.myrt.cc'
+export const SEO_SITE_ORIGIN = 'https://myrt.cc'
+export const SEO_SHARE_IMAGE_URL = `${SEO_SITE_ORIGIN}/og-image.png`
 
 const DEFAULT_DESCRIPTION =
   'Sub2API provides unified access to Claude, GPT, Gemini and other leading AI models with smart routing and live health monitoring.'
@@ -75,6 +76,7 @@ function updateStructuredData(siteName: string, description: string, siteLogo?: 
         url: `${SEO_SITE_ORIGIN}/`,
         name: siteName,
         description,
+        inLanguage: ['zh-CN', 'en'],
       },
       {
         '@type': 'Organization',
@@ -91,16 +93,29 @@ function updateStructuredData(siteName: string, description: string, siteLogo?: 
         applicationCategory: 'DeveloperApplication',
         operatingSystem: 'Web',
         description,
+        image: SEO_SHARE_IMAGE_URL,
       },
     ],
   })
 }
 
 function clearShareMetadata(): void {
-  for (const property of ['og:type', 'og:site_name', 'og:title', 'og:description', 'og:url', 'og:locale', 'og:locale:alternate']) {
+  for (const property of [
+    'og:type',
+    'og:site_name',
+    'og:title',
+    'og:description',
+    'og:url',
+    'og:locale',
+    'og:locale:alternate',
+    'og:image',
+    'og:image:width',
+    'og:image:height',
+    'og:image:alt',
+  ]) {
     removeMeta('property', property)
   }
-  for (const name of ['twitter:card', 'twitter:title', 'twitter:description']) {
+  for (const name of ['twitter:card', 'twitter:title', 'twitter:description', 'twitter:image', 'twitter:image:alt']) {
     removeMeta('name', name)
   }
 }
@@ -152,8 +167,14 @@ export function applyRouteSeo(context: RouteSeoContext): void {
   upsertMeta('property', 'og:url', canonicalUrl)
   upsertMeta('property', 'og:locale', ogLocale)
   upsertMeta('property', 'og:locale:alternate', alternateLocale)
-  upsertMeta('name', 'twitter:card', 'summary')
+  upsertMeta('property', 'og:image', SEO_SHARE_IMAGE_URL)
+  upsertMeta('property', 'og:image:width', '1200')
+  upsertMeta('property', 'og:image:height', '630')
+  upsertMeta('property', 'og:image:alt', title)
+  upsertMeta('name', 'twitter:card', 'summary_large_image')
   upsertMeta('name', 'twitter:title', title)
   upsertMeta('name', 'twitter:description', description)
+  upsertMeta('name', 'twitter:image', SEO_SHARE_IMAGE_URL)
+  upsertMeta('name', 'twitter:image:alt', title)
   updateStructuredData(siteName, description, siteLogo)
 }
