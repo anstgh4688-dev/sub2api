@@ -41,6 +41,15 @@
             <Icon name="book" size="md" />
           </a>
           <router-link
+            v-if="showModelPlazaEntry"
+            to="/model-plaza"
+            class="flex h-10 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            :title="t('nav.modelPlaza')"
+          >
+            <Icon name="grid" size="md" />
+            <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
+          </router-link>
+          <router-link
             :to="isAuthenticated ? dashboardPath : '/login'"
             class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
           >
@@ -108,6 +117,15 @@
           >
             <Icon name="book" size="sm" />
           </a>
+          <router-link
+            v-if="showModelPlazaEntry"
+            to="/model-plaza"
+            class="inline-flex items-center gap-1.5 rounded-lg p-2 text-sm text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
+            :title="t('nav.modelPlaza')"
+          >
+            <Icon name="grid" size="sm" />
+            <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
+          </router-link>
 
           <router-link
             :to="isAuthenticated ? dashboardPath : '/login'"
@@ -523,6 +541,7 @@ import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import CosmicBackdrop from '@/components/common/CosmicBackdrop.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { sanitizeUrl } from '@/utils/url'
+import { FeatureFlags, isFeatureFlagEnabled } from '@/utils/featureFlags'
 import { useTrafficStream, type TrafficEvent } from '@/composables/useTrafficStream'
 import { execTerminalCommand } from '@/utils/terminalCommands'
 import type { GroupPlatform } from '@/types'
@@ -834,6 +853,7 @@ const hasHomeContent = computed(() => homeContent.value.trim().length > 0)
 const compactHomeEnabled = computed(() => appStore.cachedPublicSettings?.compact_home_enabled === true)
 const legalDocuments = computed(() => appStore.cachedPublicSettings?.login_agreement_documents ?? [])
 const registrationEnabled = computed(() => appStore.cachedPublicSettings?.registration_enabled !== false)
+const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))
 
 const isHomeContentUrl = computed(() => {
   const content = homeContent.value.trim()
@@ -845,6 +865,12 @@ const sceneOffset = ref({ x: 0, y: 0 })
 const githubUrl = 'https://github.com/Wei-Shaw/sub2api'
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+const modelPlazaRequiresAuth = computed(
+  () => appStore.cachedPublicSettings?.model_plaza_require_auth === true,
+)
+const showModelPlazaEntry = computed(
+  () => modelPlazaEnabled.value && (isAuthenticated.value || !modelPlazaRequiresAuth.value),
+)
 const isAdmin = computed(() => authStore.isAdmin)
 const dashboardPath = computed(() => isAdmin.value ? '/admin/dashboard' : '/dashboard')
 
