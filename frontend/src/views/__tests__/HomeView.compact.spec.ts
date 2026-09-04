@@ -48,6 +48,9 @@ function mountHome(settings: Record<string, unknown> = {}) {
 
   return mount(HomeView, {
     global: {
+      directives: {
+        reveal: () => {}
+      },
       stubs: {
         RouterLink: RouterLinkStub,
         LocaleSwitcher: { template: '<div data-testid="locale-switcher" />' },

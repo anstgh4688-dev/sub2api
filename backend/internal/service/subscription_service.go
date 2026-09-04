@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"math/rand/v2"
 	"strconv"
 	"strings"
@@ -42,6 +43,7 @@ var (
 	ErrMonthlyLimitExceeded        = infraerrors.TooManyRequests("MONTHLY_LIMIT_EXCEEDED", "monthly usage limit exceeded")
 	ErrSubscriptionNilInput        = infraerrors.BadRequest("SUBSCRIPTION_NIL_INPUT", "subscription input cannot be nil")
 	ErrAdjustWouldExpire           = infraerrors.BadRequest("ADJUST_WOULD_EXPIRE", "adjustment would result in expired subscription (remaining days must be > 0)")
+	ErrInvalidLimitOverride        = infraerrors.BadRequest("INVALID_LIMIT_OVERRIDE", "subscription limit override must be a finite non-negative number")
 )
 
 // SubscriptionService 订阅服务
@@ -814,6 +816,50 @@ func (s *SubscriptionService) GetByID(ctx context.Context, id int64) (*UserSubsc
 	return s.userSubRepo.GetByID(ctx, id)
 }
 
+type UpdateSubscriptionLimitsInput struct {
+	DailySet   bool
+	WeeklySet  bool
+	MonthlySet bool
+	Daily      *float64
+	Weekly     *float64
+	Monthly    *float64
+}
+
+type subscriptionLimitOverrideRepository interface {
+	UpdateLimitOverrides(ctx context.Context, subscriptionID int64, input UpdateSubscriptionLimitsInput) error
+}
+
+// AdminUpdateLimits updates per-subscription quota overrides. A nil value for a
+// selected period clears the override so that period inherits the group limit.
+func (s *SubscriptionService) AdminUpdateLimits(ctx context.Context, subscriptionID int64, input UpdateSubscriptionLimitsInput) (*UserSubscription, error) {
+	if !input.DailySet && !input.WeeklySet && !input.MonthlySet {
+		return nil, ErrInvalidLimitOverride
+	}
+	for _, value := range []*float64{input.Daily, input.Weekly, input.Monthly} {
+		if value != nil && (math.IsNaN(*value) || math.IsInf(*value, 0) || *value < 0) {
+			return nil, ErrInvalidLimitOverride
+		}
+	}
+
+	limitRepo, ok := s.userSubRepo.(subscriptionLimitOverrideRepository)
+	if !ok {
+		return nil, fmt.Errorf("subscription limit override repository is not configured")
+	}
+	if err := limitRepo.UpdateLimitOverrides(ctx, subscriptionID, input); err != nil {
+		return nil, err
+	}
+	refreshed, err := s.userSubRepo.GetByID(ctx, subscriptionID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.refreshSubscriptionCaches(refreshed); err != nil {
+		// The limits are committed. A retry should not be required merely because
+		// cache publication failed; failed writes delete the stale Redis snapshot.
+		log.Printf("Warning: subscription limits committed but cache refresh failed for subscription %d: %v", subscriptionID, err)
+	}
+	return refreshed, nil
+}
+
 // GetActiveSubscription 获取用户对特定分组的有效订阅
 // 使用 L1 缓存 + singleflight 加速中间件热路径。
 // 返回缓存对象的浅拷贝，调用方可安全修改字段而不会污染缓存或触发 data race。
@@ -1213,8 +1259,8 @@ func (s *SubscriptionService) calculateProgress(sub *UserSubscription, group *Gr
 	}
 
 	// 日进度
-	if group.HasDailyLimit() && sub.DailyWindowStart != nil {
-		limit := *group.DailyLimitUSD
+	if limitValue := sub.EffectiveDailyLimitUSD(group); limitValue != nil && *limitValue > 0 && sub.DailyWindowStart != nil {
+		limit := *limitValue
 		resetsAt := sub.DailyWindowStart.Add(24 * time.Hour)
 		if dailyResetTime := sub.DailyResetTime(); dailyResetTime != nil {
 			resetsAt = *dailyResetTime
@@ -1240,8 +1286,8 @@ func (s *SubscriptionService) calculateProgress(sub *UserSubscription, group *Gr
 	}
 
 	// 周进度
-	if group.HasWeeklyLimit() && sub.WeeklyWindowStart != nil {
-		limit := *group.WeeklyLimitUSD
+	if limitValue := sub.EffectiveWeeklyLimitUSD(group); limitValue != nil && *limitValue > 0 && sub.WeeklyWindowStart != nil {
+		limit := *limitValue
 		resetsAt := sub.WeeklyWindowStart.Add(7 * 24 * time.Hour)
 		if weeklyResetTime := sub.WeeklyResetTime(); weeklyResetTime != nil {
 			resetsAt = *weeklyResetTime
@@ -1267,8 +1313,8 @@ func (s *SubscriptionService) calculateProgress(sub *UserSubscription, group *Gr
 	}
 
 	// 月进度
-	if group.HasMonthlyLimit() && sub.MonthlyWindowStart != nil {
-		limit := *group.MonthlyLimitUSD
+	if limitValue := sub.EffectiveMonthlyLimitUSD(group); limitValue != nil && *limitValue > 0 && sub.MonthlyWindowStart != nil {
+		limit := *limitValue
 		resetsAt := sub.MonthlyWindowStart.Add(30 * 24 * time.Hour)
 		if monthlyResetTime := sub.MonthlyResetTime(); monthlyResetTime != nil {
 			resetsAt = *monthlyResetTime

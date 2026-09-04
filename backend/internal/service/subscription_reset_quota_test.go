@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Wei-Shaw/sub2api/internal/config"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/timezone"
 	"github.com/stretchr/testify/require"
 )
@@ -55,6 +56,8 @@ func (r *resetQuotaUserSubRepoStub) ResetUsageWindows(_ context.Context, _ int64
 	if r.sub == nil {
 		return nil
 	}
+	dailyUsage := r.sub.DailyUsageUSD
+	weeklyUsage := r.sub.WeeklyUsageUSD
 	if resetDaily {
 		r.sub.DailyUsageUSD = 0
 		r.sub.DailyWindowStart = &dailyStart
@@ -62,11 +65,21 @@ func (r *resetQuotaUserSubRepoStub) ResetUsageWindows(_ context.Context, _ int64
 	if resetWeekly {
 		r.sub.WeeklyUsageUSD = 0
 		r.sub.WeeklyWindowStart = &periodicStart
+	} else if resetDaily {
+		r.sub.WeeklyUsageUSD += dailyUsage
 	}
 	if resetMonthly {
 		r.sub.MonthlyUsageUSD = 0
 		r.sub.MonthlyWindowStart = &periodicStart
+	} else {
+		if resetDaily {
+			r.sub.MonthlyUsageUSD += dailyUsage
+		}
+		if resetWeekly {
+			r.sub.MonthlyUsageUSD += weeklyUsage
+		}
 	}
+	r.sub.CacheRevision++
 	return nil
 }
 
@@ -95,7 +108,14 @@ func newResetQuotaSvc(stub *resetQuotaUserSubRepoStub) *SubscriptionService {
 
 func TestAdminResetQuota_ResetBoth(t *testing.T) {
 	stub := &resetQuotaUserSubRepoStub{
-		sub: &UserSubscription{ID: 1, UserID: 10, GroupID: 20},
+		sub: &UserSubscription{
+			ID:              1,
+			UserID:          10,
+			GroupID:         20,
+			DailyUsageUSD:   2,
+			WeeklyUsageUSD:  10,
+			MonthlyUsageUSD: 30,
+		},
 	}
 	svc := newResetQuotaSvc(stub)
 	resetAt := time.Date(2026, 7, 1, 10, 37, 42, 123, time.UTC)
@@ -113,11 +133,21 @@ func TestAdminResetQuota_ResetBoth(t *testing.T) {
 	require.Equal(t, resetAt, stub.periodicStart)
 	require.Equal(t, timezone.StartOfDay(resetAt), *result.DailyWindowStart)
 	require.Equal(t, resetAt, *result.WeeklyWindowStart)
+	require.Zero(t, result.DailyUsageUSD)
+	require.Zero(t, result.WeeklyUsageUSD)
+	require.Equal(t, float64(42), result.MonthlyUsageUSD)
 }
 
 func TestAdminResetQuota_ResetDailyOnly(t *testing.T) {
 	stub := &resetQuotaUserSubRepoStub{
-		sub: &UserSubscription{ID: 2, UserID: 10, GroupID: 20},
+		sub: &UserSubscription{
+			ID:              2,
+			UserID:          10,
+			GroupID:         20,
+			DailyUsageUSD:   2,
+			WeeklyUsageUSD:  10,
+			MonthlyUsageUSD: 30,
+		},
 	}
 	svc := newResetQuotaSvc(stub)
 
@@ -128,11 +158,21 @@ func TestAdminResetQuota_ResetDailyOnly(t *testing.T) {
 	require.True(t, stub.resetDailyCalled, "应调用 ResetDailyUsage")
 	require.False(t, stub.resetWeeklyCalled, "不应调用 ResetWeeklyUsage")
 	require.False(t, stub.resetMonthlyCalled, "不应调用 ResetMonthlyUsage")
+	require.Zero(t, result.DailyUsageUSD)
+	require.Equal(t, float64(12), result.WeeklyUsageUSD)
+	require.Equal(t, float64(32), result.MonthlyUsageUSD)
 }
 
 func TestAdminResetQuota_ResetWeeklyOnly(t *testing.T) {
 	stub := &resetQuotaUserSubRepoStub{
-		sub: &UserSubscription{ID: 3, UserID: 10, GroupID: 20},
+		sub: &UserSubscription{
+			ID:              3,
+			UserID:          10,
+			GroupID:         20,
+			DailyUsageUSD:   2,
+			WeeklyUsageUSD:  10,
+			MonthlyUsageUSD: 30,
+		},
 	}
 	svc := newResetQuotaSvc(stub)
 
@@ -143,6 +183,9 @@ func TestAdminResetQuota_ResetWeeklyOnly(t *testing.T) {
 	require.False(t, stub.resetDailyCalled, "不应调用 ResetDailyUsage")
 	require.True(t, stub.resetWeeklyCalled, "应调用 ResetWeeklyUsage")
 	require.False(t, stub.resetMonthlyCalled, "不应调用 ResetMonthlyUsage")
+	require.Equal(t, float64(2), result.DailyUsageUSD)
+	require.Zero(t, result.WeeklyUsageUSD)
+	require.Equal(t, float64(40), result.MonthlyUsageUSD)
 }
 
 func TestAdminResetQuota_BothFalseReturnsError(t *testing.T) {
@@ -202,7 +245,14 @@ func TestAdminResetQuota_ResetWeeklyUsageError(t *testing.T) {
 
 func TestAdminResetQuota_ResetMonthlyOnly(t *testing.T) {
 	stub := &resetQuotaUserSubRepoStub{
-		sub: &UserSubscription{ID: 8, UserID: 10, GroupID: 20},
+		sub: &UserSubscription{
+			ID:              8,
+			UserID:          10,
+			GroupID:         20,
+			DailyUsageUSD:   2,
+			WeeklyUsageUSD:  10,
+			MonthlyUsageUSD: 30,
+		},
 	}
 	svc := newResetQuotaSvc(stub)
 
@@ -213,6 +263,30 @@ func TestAdminResetQuota_ResetMonthlyOnly(t *testing.T) {
 	require.False(t, stub.resetDailyCalled, "不应调用 ResetDailyUsage")
 	require.False(t, stub.resetWeeklyCalled, "不应调用 ResetWeeklyUsage")
 	require.True(t, stub.resetMonthlyCalled, "应调用 ResetMonthlyUsage")
+	require.Equal(t, float64(2), result.DailyUsageUSD)
+	require.Equal(t, float64(10), result.WeeklyUsageUSD)
+	require.Zero(t, result.MonthlyUsageUSD)
+}
+
+func TestAdminResetQuota_ResetAllClearsEveryPeriod(t *testing.T) {
+	stub := &resetQuotaUserSubRepoStub{
+		sub: &UserSubscription{
+			ID:              12,
+			UserID:          10,
+			GroupID:         20,
+			DailyUsageUSD:   2,
+			WeeklyUsageUSD:  10,
+			MonthlyUsageUSD: 30,
+		},
+	}
+	svc := newResetQuotaSvc(stub)
+
+	result, err := svc.AdminResetQuota(context.Background(), 12, true, true, true)
+
+	require.NoError(t, err)
+	require.Zero(t, result.DailyUsageUSD)
+	require.Zero(t, result.WeeklyUsageUSD)
+	require.Zero(t, result.MonthlyUsageUSD)
 }
 
 func TestAdminResetQuota_BeforeStartsAtSameDayPreservesAutomaticBoundary(t *testing.T) {
@@ -271,4 +345,69 @@ func TestAdminResetQuota_ReturnsRefreshedSub(t *testing.T) {
 	// 服务应返回第二次 GetByID 的刷新值而非初始的 99.9
 	require.Equal(t, float64(0), result.DailyUsageUSD, "返回的订阅应反映已归零的用量")
 	require.True(t, stub.resetDailyCalled)
+}
+
+func TestAdminResetQuota_PublishesPostResetSnapshot(t *testing.T) {
+	stub := &resetQuotaUserSubRepoStub{
+		sub: &UserSubscription{
+			ID:              10,
+			UserID:          20,
+			GroupID:         30,
+			Status:          SubscriptionStatusActive,
+			ExpiresAt:       time.Now().Add(time.Hour),
+			DailyUsageUSD:   5,
+			WeeklyUsageUSD:  13,
+			MonthlyUsageUSD: 33,
+			CacheRevision:   7,
+		},
+	}
+	cache := &billingCacheWorkerStub{}
+	billing := NewBillingCacheService(cache, nil, stub, nil, nil, nil, &config.Config{}, nil)
+	t.Cleanup(billing.Stop)
+	svc := NewSubscriptionService(groupRepoNoop{}, stub, billing, nil, nil)
+
+	result, err := svc.AdminResetQuota(context.Background(), 10, true, false, false)
+	require.NoError(t, err)
+	require.Equal(t, int64(8), result.CacheRevision)
+
+	cache.mu.Lock()
+	snapshot := cache.lastSubscription
+	publishedKey := cache.publishedCacheKey
+	cache.mu.Unlock()
+	require.NotNil(t, snapshot)
+	require.Equal(t, &SubscriptionCacheData{
+		Status:       SubscriptionStatusActive,
+		ExpiresAt:    result.ExpiresAt,
+		DailyUsage:   0,
+		WeeklyUsage:  18,
+		MonthlyUsage: 38,
+		Version:      8,
+	}, snapshot)
+	require.Equal(t, subCacheKey(20, 30), publishedKey)
+}
+
+func TestAdminResetQuota_CacheFailureDoesNotReportCommittedResetAsFailure(t *testing.T) {
+	stub := &resetQuotaUserSubRepoStub{
+		sub: &UserSubscription{
+			ID:            11,
+			UserID:        21,
+			GroupID:       31,
+			DailyUsageUSD: 5,
+			CacheRevision: 9,
+		},
+	}
+	cache := &billingCacheWorkerStub{subscriptionSetErr: errors.New("redis unavailable")}
+	billing := NewBillingCacheService(cache, nil, stub, nil, nil, nil, &config.Config{}, nil)
+	t.Cleanup(billing.Stop)
+	svc := NewSubscriptionService(groupRepoNoop{}, stub, billing, nil, nil)
+
+	result, err := svc.AdminResetQuota(context.Background(), 11, true, false, false)
+	require.NoError(t, err)
+	require.Zero(t, result.DailyUsageUSD)
+	require.True(t, stub.resetDailyCalled)
+
+	cache.mu.Lock()
+	publishedKey := cache.publishedCacheKey
+	cache.mu.Unlock()
+	require.Equal(t, subCacheKey(21, 31), publishedKey, "snapshot failure must not skip L1 invalidation publish")
 }

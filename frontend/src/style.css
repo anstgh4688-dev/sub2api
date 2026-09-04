@@ -776,3 +776,27 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* ============ Scroll reveal (v-reveal directive) ============ */
+/* Apple-style: restrained offset, long smooth ease, one-shot. The directive
+   adds .reveal only when IntersectionObserver exists and reduced motion is
+   off, so no-JS / reduced-motion users see content immediately. Classes are
+   removed on animationend, handing transform control back to hover styles. */
+.reveal {
+  opacity: 0;
+}
+
+.reveal-visible {
+  animation: reveal-in 0.9s cubic-bezier(0.28, 0.11, 0.32, 1) var(--reveal-delay, 0ms) both;
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

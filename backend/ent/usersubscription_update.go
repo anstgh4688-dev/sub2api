@@ -250,6 +250,87 @@ func (_u *UserSubscriptionUpdate) AddMonthlyUsageUsd(v float64) *UserSubscriptio
 	return _u
 }
 
+// SetDailyLimitOverrideUsd sets the "daily_limit_override_usd" field.
+func (_u *UserSubscriptionUpdate) SetDailyLimitOverrideUsd(v float64) *UserSubscriptionUpdate {
+	_u.mutation.ResetDailyLimitOverrideUsd()
+	_u.mutation.SetDailyLimitOverrideUsd(v)
+	return _u
+}
+
+// SetNillableDailyLimitOverrideUsd sets the "daily_limit_override_usd" field if the given value is not nil.
+func (_u *UserSubscriptionUpdate) SetNillableDailyLimitOverrideUsd(v *float64) *UserSubscriptionUpdate {
+	if v != nil {
+		_u.SetDailyLimitOverrideUsd(*v)
+	}
+	return _u
+}
+
+// AddDailyLimitOverrideUsd adds value to the "daily_limit_override_usd" field.
+func (_u *UserSubscriptionUpdate) AddDailyLimitOverrideUsd(v float64) *UserSubscriptionUpdate {
+	_u.mutation.AddDailyLimitOverrideUsd(v)
+	return _u
+}
+
+// ClearDailyLimitOverrideUsd clears the value of the "daily_limit_override_usd" field.
+func (_u *UserSubscriptionUpdate) ClearDailyLimitOverrideUsd() *UserSubscriptionUpdate {
+	_u.mutation.ClearDailyLimitOverrideUsd()
+	return _u
+}
+
+// SetWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdate) SetWeeklyLimitOverrideUsd(v float64) *UserSubscriptionUpdate {
+	_u.mutation.ResetWeeklyLimitOverrideUsd()
+	_u.mutation.SetWeeklyLimitOverrideUsd(v)
+	return _u
+}
+
+// SetNillableWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field if the given value is not nil.
+func (_u *UserSubscriptionUpdate) SetNillableWeeklyLimitOverrideUsd(v *float64) *UserSubscriptionUpdate {
+	if v != nil {
+		_u.SetWeeklyLimitOverrideUsd(*v)
+	}
+	return _u
+}
+
+// AddWeeklyLimitOverrideUsd adds value to the "weekly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdate) AddWeeklyLimitOverrideUsd(v float64) *UserSubscriptionUpdate {
+	_u.mutation.AddWeeklyLimitOverrideUsd(v)
+	return _u
+}
+
+// ClearWeeklyLimitOverrideUsd clears the value of the "weekly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdate) ClearWeeklyLimitOverrideUsd() *UserSubscriptionUpdate {
+	_u.mutation.ClearWeeklyLimitOverrideUsd()
+	return _u
+}
+
+// SetMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdate) SetMonthlyLimitOverrideUsd(v float64) *UserSubscriptionUpdate {
+	_u.mutation.ResetMonthlyLimitOverrideUsd()
+	_u.mutation.SetMonthlyLimitOverrideUsd(v)
+	return _u
+}
+
+// SetNillableMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field if the given value is not nil.
+func (_u *UserSubscriptionUpdate) SetNillableMonthlyLimitOverrideUsd(v *float64) *UserSubscriptionUpdate {
+	if v != nil {
+		_u.SetMonthlyLimitOverrideUsd(*v)
+	}
+	return _u
+}
+
+// AddMonthlyLimitOverrideUsd adds value to the "monthly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdate) AddMonthlyLimitOverrideUsd(v float64) *UserSubscriptionUpdate {
+	_u.mutation.AddMonthlyLimitOverrideUsd(v)
+	return _u
+}
+
+// ClearMonthlyLimitOverrideUsd clears the value of the "monthly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdate) ClearMonthlyLimitOverrideUsd() *UserSubscriptionUpdate {
+	_u.mutation.ClearMonthlyLimitOverrideUsd()
+	return _u
+}
+
 // SetCacheRevision sets the "cache_revision" field.
 func (_u *UserSubscriptionUpdate) SetCacheRevision(v int64) *UserSubscriptionUpdate {
 	_u.mutation.ResetCacheRevision()
@@ -536,6 +617,33 @@ func (_u *UserSubscriptionUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if value, ok := _u.mutation.AddedMonthlyUsageUsd(); ok {
 		_spec.AddField(usersubscription.FieldMonthlyUsageUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.DailyLimitOverrideUsd(); ok {
+		_spec.SetField(usersubscription.FieldDailyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDailyLimitOverrideUsd(); ok {
+		_spec.AddField(usersubscription.FieldDailyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if _u.mutation.DailyLimitOverrideUsdCleared() {
+		_spec.ClearField(usersubscription.FieldDailyLimitOverrideUsd, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.WeeklyLimitOverrideUsd(); ok {
+		_spec.SetField(usersubscription.FieldWeeklyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedWeeklyLimitOverrideUsd(); ok {
+		_spec.AddField(usersubscription.FieldWeeklyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if _u.mutation.WeeklyLimitOverrideUsdCleared() {
+		_spec.ClearField(usersubscription.FieldWeeklyLimitOverrideUsd, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.MonthlyLimitOverrideUsd(); ok {
+		_spec.SetField(usersubscription.FieldMonthlyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedMonthlyLimitOverrideUsd(); ok {
+		_spec.AddField(usersubscription.FieldMonthlyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if _u.mutation.MonthlyLimitOverrideUsdCleared() {
+		_spec.ClearField(usersubscription.FieldMonthlyLimitOverrideUsd, field.TypeFloat64)
 	}
 	if value, ok := _u.mutation.CacheRevision(); ok {
 		_spec.SetField(usersubscription.FieldCacheRevision, field.TypeInt64, value)
@@ -923,6 +1031,87 @@ func (_u *UserSubscriptionUpdateOne) AddMonthlyUsageUsd(v float64) *UserSubscrip
 	return _u
 }
 
+// SetDailyLimitOverrideUsd sets the "daily_limit_override_usd" field.
+func (_u *UserSubscriptionUpdateOne) SetDailyLimitOverrideUsd(v float64) *UserSubscriptionUpdateOne {
+	_u.mutation.ResetDailyLimitOverrideUsd()
+	_u.mutation.SetDailyLimitOverrideUsd(v)
+	return _u
+}
+
+// SetNillableDailyLimitOverrideUsd sets the "daily_limit_override_usd" field if the given value is not nil.
+func (_u *UserSubscriptionUpdateOne) SetNillableDailyLimitOverrideUsd(v *float64) *UserSubscriptionUpdateOne {
+	if v != nil {
+		_u.SetDailyLimitOverrideUsd(*v)
+	}
+	return _u
+}
+
+// AddDailyLimitOverrideUsd adds value to the "daily_limit_override_usd" field.
+func (_u *UserSubscriptionUpdateOne) AddDailyLimitOverrideUsd(v float64) *UserSubscriptionUpdateOne {
+	_u.mutation.AddDailyLimitOverrideUsd(v)
+	return _u
+}
+
+// ClearDailyLimitOverrideUsd clears the value of the "daily_limit_override_usd" field.
+func (_u *UserSubscriptionUpdateOne) ClearDailyLimitOverrideUsd() *UserSubscriptionUpdateOne {
+	_u.mutation.ClearDailyLimitOverrideUsd()
+	return _u
+}
+
+// SetWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdateOne) SetWeeklyLimitOverrideUsd(v float64) *UserSubscriptionUpdateOne {
+	_u.mutation.ResetWeeklyLimitOverrideUsd()
+	_u.mutation.SetWeeklyLimitOverrideUsd(v)
+	return _u
+}
+
+// SetNillableWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field if the given value is not nil.
+func (_u *UserSubscriptionUpdateOne) SetNillableWeeklyLimitOverrideUsd(v *float64) *UserSubscriptionUpdateOne {
+	if v != nil {
+		_u.SetWeeklyLimitOverrideUsd(*v)
+	}
+	return _u
+}
+
+// AddWeeklyLimitOverrideUsd adds value to the "weekly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdateOne) AddWeeklyLimitOverrideUsd(v float64) *UserSubscriptionUpdateOne {
+	_u.mutation.AddWeeklyLimitOverrideUsd(v)
+	return _u
+}
+
+// ClearWeeklyLimitOverrideUsd clears the value of the "weekly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdateOne) ClearWeeklyLimitOverrideUsd() *UserSubscriptionUpdateOne {
+	_u.mutation.ClearWeeklyLimitOverrideUsd()
+	return _u
+}
+
+// SetMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdateOne) SetMonthlyLimitOverrideUsd(v float64) *UserSubscriptionUpdateOne {
+	_u.mutation.ResetMonthlyLimitOverrideUsd()
+	_u.mutation.SetMonthlyLimitOverrideUsd(v)
+	return _u
+}
+
+// SetNillableMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field if the given value is not nil.
+func (_u *UserSubscriptionUpdateOne) SetNillableMonthlyLimitOverrideUsd(v *float64) *UserSubscriptionUpdateOne {
+	if v != nil {
+		_u.SetMonthlyLimitOverrideUsd(*v)
+	}
+	return _u
+}
+
+// AddMonthlyLimitOverrideUsd adds value to the "monthly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdateOne) AddMonthlyLimitOverrideUsd(v float64) *UserSubscriptionUpdateOne {
+	_u.mutation.AddMonthlyLimitOverrideUsd(v)
+	return _u
+}
+
+// ClearMonthlyLimitOverrideUsd clears the value of the "monthly_limit_override_usd" field.
+func (_u *UserSubscriptionUpdateOne) ClearMonthlyLimitOverrideUsd() *UserSubscriptionUpdateOne {
+	_u.mutation.ClearMonthlyLimitOverrideUsd()
+	return _u
+}
+
 // SetCacheRevision sets the "cache_revision" field.
 func (_u *UserSubscriptionUpdateOne) SetCacheRevision(v int64) *UserSubscriptionUpdateOne {
 	_u.mutation.ResetCacheRevision()
@@ -1239,6 +1428,33 @@ func (_u *UserSubscriptionUpdateOne) sqlSave(ctx context.Context) (_node *UserSu
 	}
 	if value, ok := _u.mutation.AddedMonthlyUsageUsd(); ok {
 		_spec.AddField(usersubscription.FieldMonthlyUsageUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.DailyLimitOverrideUsd(); ok {
+		_spec.SetField(usersubscription.FieldDailyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedDailyLimitOverrideUsd(); ok {
+		_spec.AddField(usersubscription.FieldDailyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if _u.mutation.DailyLimitOverrideUsdCleared() {
+		_spec.ClearField(usersubscription.FieldDailyLimitOverrideUsd, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.WeeklyLimitOverrideUsd(); ok {
+		_spec.SetField(usersubscription.FieldWeeklyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedWeeklyLimitOverrideUsd(); ok {
+		_spec.AddField(usersubscription.FieldWeeklyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if _u.mutation.WeeklyLimitOverrideUsdCleared() {
+		_spec.ClearField(usersubscription.FieldWeeklyLimitOverrideUsd, field.TypeFloat64)
+	}
+	if value, ok := _u.mutation.MonthlyLimitOverrideUsd(); ok {
+		_spec.SetField(usersubscription.FieldMonthlyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedMonthlyLimitOverrideUsd(); ok {
+		_spec.AddField(usersubscription.FieldMonthlyLimitOverrideUsd, field.TypeFloat64, value)
+	}
+	if _u.mutation.MonthlyLimitOverrideUsdCleared() {
+		_spec.ClearField(usersubscription.FieldMonthlyLimitOverrideUsd, field.TypeFloat64)
 	}
 	if value, ok := _u.mutation.CacheRevision(); ok {
 		_spec.SetField(usersubscription.FieldCacheRevision, field.TypeInt64, value)

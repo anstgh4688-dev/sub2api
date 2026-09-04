@@ -68,6 +68,18 @@ func (UserSubscription) Fields() []ent.Field {
 		field.Float("monthly_usage_usd").
 			SchemaType(map[string]string{dialect.Postgres: "decimal(20,10)"}).
 			Default(0),
+		field.Float("daily_limit_override_usd").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{dialect.Postgres: "decimal(20,10)"}),
+		field.Float("weekly_limit_override_usd").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{dialect.Postgres: "decimal(20,10)"}),
+		field.Float("monthly_limit_override_usd").
+			Optional().
+			Nillable().
+			SchemaType(map[string]string{dialect.Postgres: "decimal(20,10)"}),
 		field.Int64("cache_revision").
 			Default(0),
 

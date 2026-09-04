@@ -13,6 +13,7 @@ import type {
   PaginatedResponse
 } from '@/types'
 
+<<<<<<< HEAD
 export type SubscriptionBulkAction = 'extend' | 'reset_quota' | 'revoke' | 'restore'
 
 export interface SubscriptionBulkActionRequest {
@@ -50,6 +51,12 @@ export async function bulkAction(
     { headers: { 'Idempotency-Key': idempotencyKey } }
   )
   return data
+}
+
+export interface UpdateSubscriptionLimitsRequest {
+  daily_limit_usd: number | null
+  weekly_limit_usd: number | null
+  monthly_limit_usd: number | null
 }
 
 /**
@@ -188,6 +195,21 @@ export async function resetQuota(
 }
 
 /**
+ * Update per-subscription quota overrides.
+ * A null period inherits its group limit; zero makes that period unlimited.
+ */
+export async function updateLimits(
+  id: number,
+  limits: UpdateSubscriptionLimitsRequest
+): Promise<UserSubscription> {
+  const { data } = await apiClient.put<UserSubscription>(
+    `/admin/subscriptions/${id}/limits`,
+    limits
+  )
+  return data
+}
+
+/**
  * List subscriptions by group
  * @param groupId - Group ID
  * @param page - Page number
@@ -240,6 +262,7 @@ export const subscriptionsAPI = {
   revoke,
   restore,
   resetQuota,
+  updateLimits,
   listByGroup,
   listByUser
 }

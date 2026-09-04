@@ -197,3 +197,17 @@ func TestInvalidateSubscription_StoresCurrentDatabaseRevision(t *testing.T) {
 	require.InDelta(t, 3, snapshot.DailyUsage, 1e-9)
 	require.Zero(t, atomic.LoadInt64(&cache.subscriptionDeletes))
 }
+
+func TestStoreSubscriptionSnapshot_InvalidatesStaleCacheWhenWriteFails(t *testing.T) {
+	cache := &billingCacheWorkerStub{subscriptionSetErr: errors.New("redis write failed")}
+	svc := NewBillingCacheService(cache, nil, nil, nil, nil, nil, &config.Config{}, nil)
+	t.Cleanup(svc.Stop)
+
+	err := svc.StoreSubscriptionSnapshot(context.Background(), 10, 20, &SubscriptionCacheData{
+		Status:  SubscriptionStatusActive,
+		Version: 2,
+	})
+
+	require.ErrorContains(t, err, "redis write failed")
+	require.Equal(t, int64(1), atomic.LoadInt64(&cache.subscriptionDeletes))
+}

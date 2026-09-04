@@ -527,6 +527,100 @@ func (s *UserSubscriptionRepoSuite) TestResetDailyUsage_StaleResetDoesNotClearNe
 	s.Require().WithinDuration(newWindowStart, *got.DailyWindowStart, time.Microsecond)
 }
 
+func (s *UserSubscriptionRepoSuite) TestResetUsageWindows_DailyOnlyChargesParentUsageAndInitializesWindows() {
+	user := s.mustCreateUser("admin-reset-daily@test.com", service.RoleUser)
+	group := s.mustCreateGroup("g-admin-reset-daily")
+	sub := s.mustCreateSubscription(user.ID, group.ID, func(c *dbent.UserSubscriptionCreate) {
+		c.SetDailyUsageUsd(2)
+		c.SetWeeklyUsageUsd(10)
+		c.SetMonthlyUsageUsd(30)
+	})
+
+	resetAt := time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)
+	s.Require().NoError(s.repo.ResetUsageWindows(s.ctx, sub.ID, true, false, false, resetAt, resetAt))
+
+	got, err := s.repo.GetByID(s.ctx, sub.ID)
+	s.Require().NoError(err)
+	s.Require().InDelta(0, got.DailyUsageUSD, 1e-6)
+	s.Require().InDelta(12, got.WeeklyUsageUSD, 1e-6)
+	s.Require().InDelta(32, got.MonthlyUsageUSD, 1e-6)
+	s.Require().NotNil(got.DailyWindowStart)
+	s.Require().NotNil(got.WeeklyWindowStart)
+	s.Require().NotNil(got.MonthlyWindowStart)
+	s.Require().WithinDuration(resetAt, *got.DailyWindowStart, time.Microsecond)
+	s.Require().WithinDuration(resetAt, *got.WeeklyWindowStart, time.Microsecond)
+	s.Require().WithinDuration(resetAt, *got.MonthlyWindowStart, time.Microsecond)
+	s.Require().Greater(got.CacheRevision, sub.CacheRevision)
+	resetRevision := got.CacheRevision
+
+	s.Require().NoError(s.repo.IncrementUsage(s.ctx, sub.ID, 3))
+
+	got, err = s.repo.GetByID(s.ctx, sub.ID)
+	s.Require().NoError(err)
+	s.Require().InDelta(3, got.DailyUsageUSD, 1e-6)
+	s.Require().InDelta(15, got.WeeklyUsageUSD, 1e-6)
+	s.Require().InDelta(35, got.MonthlyUsageUSD, 1e-6)
+	s.Require().Greater(got.CacheRevision, resetRevision)
+}
+
+func (s *UserSubscriptionRepoSuite) TestResetUsageWindows_WeeklyOnlyChargesMonthlyUsage() {
+	user := s.mustCreateUser("admin-reset-weekly@test.com", service.RoleUser)
+	group := s.mustCreateGroup("g-admin-reset-weekly")
+	dailyStart := time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)
+	weeklyStart := dailyStart.Add(-6 * 24 * time.Hour)
+	monthlyStart := dailyStart.Add(-20 * 24 * time.Hour)
+	sub := s.mustCreateSubscription(user.ID, group.ID, func(c *dbent.UserSubscriptionCreate) {
+		c.SetDailyWindowStart(dailyStart)
+		c.SetWeeklyWindowStart(weeklyStart)
+		c.SetMonthlyWindowStart(monthlyStart)
+		c.SetDailyUsageUsd(2)
+		c.SetWeeklyUsageUsd(10)
+		c.SetMonthlyUsageUsd(30)
+	})
+
+	resetAt := time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)
+	s.Require().NoError(s.repo.ResetUsageWindows(s.ctx, sub.ID, false, true, false, resetAt, resetAt))
+
+	got, err := s.repo.GetByID(s.ctx, sub.ID)
+	s.Require().NoError(err)
+	s.Require().InDelta(2, got.DailyUsageUSD, 1e-6)
+	s.Require().InDelta(0, got.WeeklyUsageUSD, 1e-6)
+	s.Require().InDelta(40, got.MonthlyUsageUSD, 1e-6)
+	s.Require().NotNil(got.DailyWindowStart)
+	s.Require().NotNil(got.WeeklyWindowStart)
+	s.Require().NotNil(got.MonthlyWindowStart)
+	s.Require().WithinDuration(dailyStart, *got.DailyWindowStart, time.Microsecond)
+	s.Require().WithinDuration(resetAt, *got.WeeklyWindowStart, time.Microsecond)
+	s.Require().WithinDuration(monthlyStart, *got.MonthlyWindowStart, time.Microsecond)
+
+	s.Require().NoError(s.repo.IncrementUsage(s.ctx, sub.ID, 3))
+
+	got, err = s.repo.GetByID(s.ctx, sub.ID)
+	s.Require().NoError(err)
+	s.Require().InDelta(5, got.DailyUsageUSD, 1e-6)
+	s.Require().InDelta(3, got.WeeklyUsageUSD, 1e-6)
+	s.Require().InDelta(43, got.MonthlyUsageUSD, 1e-6)
+}
+
+func (s *UserSubscriptionRepoSuite) TestResetUsageWindows_DailyAndWeeklyChargeMonthlyForBothGrants() {
+	user := s.mustCreateUser("admin-reset-daily-weekly@test.com", service.RoleUser)
+	group := s.mustCreateGroup("g-admin-reset-daily-weekly")
+	sub := s.mustCreateSubscription(user.ID, group.ID, func(c *dbent.UserSubscriptionCreate) {
+		c.SetDailyUsageUsd(2)
+		c.SetWeeklyUsageUsd(10)
+		c.SetMonthlyUsageUsd(30)
+	})
+
+	resetAt := time.Date(2025, 1, 2, 0, 0, 0, 0, time.UTC)
+	s.Require().NoError(s.repo.ResetUsageWindows(s.ctx, sub.ID, true, true, false, resetAt, resetAt))
+
+	got, err := s.repo.GetByID(s.ctx, sub.ID)
+	s.Require().NoError(err)
+	s.Require().InDelta(0, got.DailyUsageUSD, 1e-6)
+	s.Require().InDelta(0, got.WeeklyUsageUSD, 1e-6)
+	s.Require().InDelta(42, got.MonthlyUsageUSD, 1e-6)
+}
+
 func (s *UserSubscriptionRepoSuite) TestResetUsageWindows_ClearsUsageAfterAutomaticWindowAdvance() {
 	user := s.mustCreateUser("admin-reset-current@test.com", service.RoleUser)
 	group := s.mustCreateGroup("g-admin-reset-current")

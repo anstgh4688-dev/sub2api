@@ -25,6 +25,10 @@ type UserSubscription struct {
 	WeeklyUsageUSD  float64
 	MonthlyUsageUSD float64
 
+	DailyLimitOverrideUSD   *float64
+	WeeklyLimitOverrideUSD  *float64
+	MonthlyLimitOverrideUSD *float64
+
 	AssignedBy *int64
 	AssignedAt time.Time
 	Notes      string
@@ -207,24 +211,70 @@ func (s *UserSubscription) MonthlyResetTime() *time.Time {
 }
 
 func (s *UserSubscription) CheckDailyLimit(group *Group, additionalCost float64) bool {
-	if !group.HasDailyLimit() {
+	limit := s.EffectiveDailyLimitUSD(group)
+	if limit == nil || *limit <= 0 {
 		return true
 	}
-	return s.DailyUsageUSD+additionalCost <= *group.DailyLimitUSD
+	return s.DailyUsageUSD+additionalCost <= *limit
 }
 
 func (s *UserSubscription) CheckWeeklyLimit(group *Group, additionalCost float64) bool {
-	if !group.HasWeeklyLimit() {
+	limit := s.EffectiveWeeklyLimitUSD(group)
+	if limit == nil || *limit <= 0 {
 		return true
 	}
-	return s.WeeklyUsageUSD+additionalCost <= *group.WeeklyLimitUSD
+	return s.WeeklyUsageUSD+additionalCost <= *limit
 }
 
 func (s *UserSubscription) CheckMonthlyLimit(group *Group, additionalCost float64) bool {
-	if !group.HasMonthlyLimit() {
+	limit := s.EffectiveMonthlyLimitUSD(group)
+	if limit == nil || *limit <= 0 {
 		return true
 	}
-	return s.MonthlyUsageUSD+additionalCost <= *group.MonthlyLimitUSD
+	return s.MonthlyUsageUSD+additionalCost <= *limit
+}
+
+func (s *UserSubscription) EffectiveDailyLimitUSD(group *Group) *float64 {
+	if s != nil && s.DailyLimitOverrideUSD != nil {
+		return s.DailyLimitOverrideUSD
+	}
+	if group == nil {
+		return nil
+	}
+	return group.DailyLimitUSD
+}
+
+func (s *UserSubscription) EffectiveWeeklyLimitUSD(group *Group) *float64 {
+	if s != nil && s.WeeklyLimitOverrideUSD != nil {
+		return s.WeeklyLimitOverrideUSD
+	}
+	if group == nil {
+		return nil
+	}
+	return group.WeeklyLimitUSD
+}
+
+func (s *UserSubscription) EffectiveMonthlyLimitUSD(group *Group) *float64 {
+	if s != nil && s.MonthlyLimitOverrideUSD != nil {
+		return s.MonthlyLimitOverrideUSD
+	}
+	if group == nil {
+		return nil
+	}
+	return group.MonthlyLimitUSD
+}
+
+// GroupWithEffectiveLimits returns a shallow group copy with this subscription's
+// quota overrides applied. Other group settings remain unchanged.
+func (s *UserSubscription) GroupWithEffectiveLimits(group *Group) *Group {
+	if group == nil {
+		return nil
+	}
+	copy := *group
+	copy.DailyLimitUSD = s.EffectiveDailyLimitUSD(group)
+	copy.WeeklyLimitUSD = s.EffectiveWeeklyLimitUSD(group)
+	copy.MonthlyLimitUSD = s.EffectiveMonthlyLimitUSD(group)
+	return &copy
 }
 
 func (s *UserSubscription) CheckAllLimits(group *Group, additionalCost float64) (daily, weekly, monthly bool) {

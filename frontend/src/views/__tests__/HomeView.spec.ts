@@ -108,6 +108,9 @@ const routerLinkStub = {
 function mountHome() {
   return mount(HomeView, {
     global: {
+      directives: {
+        reveal: () => {}
+      },
       stubs: {
         RouterLink: routerLinkStub,
         LocaleSwitcher: true,

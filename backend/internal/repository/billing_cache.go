@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"math/rand/v2"
 	"strconv"
 	"strings"
@@ -55,12 +56,15 @@ func billingLegacySubKey(userID, groupID int64) string {
 }
 
 const (
-	subFieldStatus       = "status"
-	subFieldExpiresAt    = "expires_at"
-	subFieldDailyUsage   = "daily_usage"
-	subFieldWeeklyUsage  = "weekly_usage"
-	subFieldMonthlyUsage = "monthly_usage"
-	subFieldRevision     = "cache_revision"
+	subFieldStatus               = "status"
+	subFieldExpiresAt            = "expires_at"
+	subFieldDailyUsage           = "daily_usage"
+	subFieldWeeklyUsage          = "weekly_usage"
+	subFieldMonthlyUsage         = "monthly_usage"
+	subFieldDailyLimitOverride   = "daily_limit_override"
+	subFieldWeeklyLimitOverride  = "weekly_limit_override"
+	subFieldMonthlyLimitOverride = "monthly_limit_override"
+	subFieldRevision             = "cache_revision"
 )
 
 // billingRateLimitKey generates the Redis key for API key rate limit cache.
@@ -90,7 +94,7 @@ var (
 	`)
 
 	setSubscriptionScript = redis.NewScript(`
-		local incoming_revision = tonumber(ARGV[6])
+		local incoming_revision = tonumber(ARGV[9])
 		if incoming_revision == nil or incoming_revision <= 0 then
 			return redis.error_reply('subscription cache revision must be positive')
 		end
@@ -106,8 +110,11 @@ var (
 			'daily_usage', ARGV[3],
 			'weekly_usage', ARGV[4],
 			'monthly_usage', ARGV[5],
-			'cache_revision', ARGV[6])
-		redis.call('EXPIRE', KEYS[1], ARGV[7])
+			'daily_limit_override', ARGV[6],
+			'weekly_limit_override', ARGV[7],
+			'monthly_limit_override', ARGV[8],
+			'cache_revision', ARGV[9])
+		redis.call('EXPIRE', KEYS[1], ARGV[10])
 		return 1
 	`)
 
@@ -225,6 +232,19 @@ func (c *billingCache) parseSubscriptionCache(data map[string]string) (*service.
 	if monthlyStr, ok := data[subFieldMonthlyUsage]; ok {
 		result.MonthlyUsage, _ = strconv.ParseFloat(monthlyStr, 64)
 	}
+	var err error
+	result.DailyLimitOverride, err = parseOptionalFloat(data[subFieldDailyLimitOverride])
+	if err != nil {
+		return nil, fmt.Errorf("invalid cache: invalid daily limit: %w", err)
+	}
+	result.WeeklyLimitOverride, err = parseOptionalFloat(data[subFieldWeeklyLimitOverride])
+	if err != nil {
+		return nil, fmt.Errorf("invalid cache: invalid weekly limit: %w", err)
+	}
+	result.MonthlyLimitOverride, err = parseOptionalFloat(data[subFieldMonthlyLimitOverride])
+	if err != nil {
+		return nil, fmt.Errorf("invalid cache: invalid monthly limit: %w", err)
+	}
 
 	revisionStr, ok := data[subFieldRevision]
 	if !ok {
@@ -255,6 +275,9 @@ func (c *billingCache) SetSubscriptionCache(ctx context.Context, userID, groupID
 		data.DailyUsage,
 		data.WeeklyUsage,
 		data.MonthlyUsage,
+		formatOptionalFloat(data.DailyLimitOverride),
+		formatOptionalFloat(data.WeeklyLimitOverride),
+		formatOptionalFloat(data.MonthlyLimitOverride),
 		data.Version,
 		int(jitteredTTL().Seconds()),
 	).Result()
@@ -263,6 +286,27 @@ func (c *billingCache) SetSubscriptionCache(ctx context.Context, userID, groupID
 		return err
 	}
 	return nil
+}
+
+func parseOptionalFloat(value string) (*float64, error) {
+	if value == "" {
+		return nil, nil
+	}
+	parsed, err := strconv.ParseFloat(value, 64)
+	if err != nil || math.IsNaN(parsed) || math.IsInf(parsed, 0) {
+		if err == nil {
+			err = fmt.Errorf("non-finite value")
+		}
+		return nil, err
+	}
+	return &parsed, nil
+}
+
+func formatOptionalFloat(value *float64) string {
+	if value == nil {
+		return ""
+	}
+	return strconv.FormatFloat(*value, 'f', -1, 64)
 }
 
 func (c *billingCache) InvalidateSubscriptionCache(ctx context.Context, userID, groupID int64) error {

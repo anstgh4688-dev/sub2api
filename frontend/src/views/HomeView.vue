@@ -195,40 +195,83 @@
             <div class="pool-console">
               <div class="console-head">
                 <span class="console-lights"><i></i><i></i><i></i></span>
-                <span class="console-title">ACCOUNT_POOL · LIVE</span>
+                <span class="console-title">
+                  ACCOUNT_POOL · <em class="live-badge" :class="dataLive ? 'live-badge--on' : 'live-badge--sim'">{{ dataLive ? 'LIVE' : 'SIM' }}</em>
+                </span>
                 <span class="console-health"><i></i>HEALTHY</span>
               </div>
 
               <div class="console-body">
                 <div
-                  v-for="account in poolAccounts"
-                  :key="account.id"
+                  v-for="node in poolNodes"
+                  :key="node.tag"
                   class="pool-row"
-                  :class="{ 'pool-row--routed': account.state === 'routed', 'pool-row--standby': account.state === 'standby' }"
+                  :class="{
+                    'pool-row--routed': node.tag === lastRoutedTag,
+                    'pool-row--dim': node.state === 'down' || node.state === 'disabled'
+                  }"
                 >
-                  <span class="pool-platform" :class="`pool-platform--${account.platform}`">
-                    <PlatformIcon :platform="account.platform" size="sm" />
+                  <span class="pool-platform" :class="`pool-platform--${node.platform}`">
+                    <PlatformIcon :platform="node.platform" size="sm" />
                   </span>
                   <span class="pool-meta">
-                    <strong>{{ account.id }}</strong>
-                    <small>{{ account.plan }}</small>
+                    <strong>{{ node.tag }}</strong>
+                    <small>{{ node.platform }}</small>
                   </span>
-                  <span class="pool-health-bar">
-                    <i :style="{ width: `${account.health}%`, animationDelay: `${account.delay}ms` }"></i>
-                  </span>
+                  <span class="pool-state-bar" :class="`pool-state-bar--${node.state}`"><i></i></span>
                   <span class="pool-state">
-                    <template v-if="account.state === 'routed'">● ROUTED</template>
-                    <template v-else-if="account.state === 'standby'">STANDBY</template>
-                    <template v-else>ACTIVE</template>
+                    <template v-if="node.tag === lastRoutedTag">● ROUTED</template>
+                    <template v-else>{{ NODE_STATE_LABELS[node.state] }}</template>
                   </span>
+                </div>
+                <div v-if="poolLive && !poolNodes.length" class="pool-row pool-row--dim">
+                  <span class="pool-meta">
+                    <strong>pool empty</strong>
+                    <small>add accounts to go live</small>
+                  </span>
+                </div>
+              </div>
+
+              <div ref="streamEl" class="console-stream" aria-live="polite">
+                <div
+                  v-for="line in streamLines"
+                  :key="line.id"
+                  class="stream-line"
+                  :class="[`stream-line--${line.kind}`, line.accent ? `stream-line--${line.accent}` : '']"
+                >
+                  <template v-if="line.kind === 'event' && line.evt">
+                    <span class="evt-time">{{ line.evt.time }}</span>
+                    <span class="evt-dot" :class="`evt-dot--${line.evt.platform}`" aria-hidden="true"></span>
+                    <span class="evt-model">{{ line.evt.platform }}/{{ line.evt.model }}</span>
+                    <span class="evt-status">200</span>
+                    <span class="evt-duration">{{ (line.evt.durationMs / 1000).toFixed(2) }}s</span>
+                  </template>
+                  <template v-else>{{ line.text }}</template>
+                </div>
+                <div v-if="!streamLines.length" class="stream-line stream-line--out">
+                  listening for traffic…
                 </div>
               </div>
 
               <div class="console-foot">
                 <span class="foot-label">ROUTE</span>
-                <code>pool.select(healthy) → {{ routedAccount.id }}</code>
-                <span class="foot-latency">{{ routeLatency }}ms</span>
+                <code v-if="lastRoutedTag">pool.last → {{ lastRoutedTag }}</code>
+                <code v-else>pool.idle — awaiting traffic</code>
+                <span v-if="lastRoutedTag" class="foot-latency">{{ (lastRouteDurationMs / 1000).toFixed(2) }}s</span>
               </div>
+
+              <form class="console-input" @submit.prevent="runCommand">
+                <span class="input-prompt" aria-hidden="true">❯</span>
+                <input
+                  v-model="terminalInput"
+                  type="text"
+                  placeholder="type 'help' to explore the pool"
+                  spellcheck="false"
+                  autocomplete="off"
+                  autocapitalize="off"
+                  aria-label="Terminal command input"
+                />
+              </form>
             </div>
 
             <div class="float-chip float-chip--failover">
@@ -245,7 +288,7 @@
 
       <!-- ============ SIGNAL STRIP ============ -->
       <section class="signal-strip" :aria-label="t('home.capabilities')">
-        <div v-for="signal in signalItems" :key="signal.labelKey" class="signal-item">
+        <div v-for="(signal, i) in signalItems" :key="signal.labelKey" v-reveal="i * 80" class="signal-item">
           <span class="signal-icon"><Icon :name="signal.icon" size="sm" /></span>
           <span class="signal-copy">
             <small>{{ signal.code }}</small>
@@ -259,11 +302,11 @@
         <div class="pool-layout">
           <div class="pool-copy">
             <span class="section-index">01 / ACCOUNT POOL</span>
-            <h2>{{ t('home.pool.title') }}</h2>
-            <p class="pool-lede">{{ t('home.pool.subtitle') }}</p>
+            <h2 v-reveal>{{ t('home.pool.title') }}</h2>
+            <p v-reveal="60" class="pool-lede">{{ t('home.pool.subtitle') }}</p>
 
             <div class="pool-features">
-              <div v-for="feature in poolFeatures" :key="feature.titleKey" class="pool-feature">
+              <div v-for="(feature, i) in poolFeatures" :key="feature.titleKey" v-reveal="i * 70" class="pool-feature">
                 <span class="pool-feature-icon">
                   <Icon :name="feature.icon" size="sm" />
                 </span>
@@ -282,11 +325,11 @@
         <div class="direct-layout">
           <div class="direct-copy">
             <span class="section-index">02 / DIRECT CONNECT</span>
-            <h2>{{ t('home.direct.title') }}</h2>
-            <p class="direct-lede">{{ t('home.direct.subtitle') }}</p>
+            <h2 v-reveal>{{ t('home.direct.title') }}</h2>
+            <p v-reveal="60" class="direct-lede">{{ t('home.direct.subtitle') }}</p>
 
             <div class="direct-features">
-              <div v-for="feature in directFeatures" :key="feature.titleKey" class="pool-feature">
+              <div v-for="(feature, i) in directFeatures" :key="feature.titleKey" v-reveal="i * 70" class="pool-feature">
                 <span class="pool-feature-icon">
                   <Icon :name="feature.icon" size="sm" />
                 </span>
@@ -302,14 +345,14 @@
 
       <!-- ============ HOW IT WORKS ============ -->
       <section class="steps-section">
-        <div class="section-heading section-heading--center">
+        <div v-reveal class="section-heading section-heading--center">
           <span class="section-index">03 / QUICK START</span>
           <h2>{{ t('home.steps.title') }}</h2>
           <p>{{ t('home.steps.subtitle') }}</p>
         </div>
 
         <div class="steps-flow">
-          <div v-for="(step, index) in stepItems" :key="step.titleKey" class="flow-node">
+          <div v-for="(step, index) in stepItems" :key="step.titleKey" v-reveal="index * 110" class="flow-node">
             <span class="flow-orb">
               <Icon :name="step.icon" size="md" />
               <i class="flow-orb-ring"></i>
@@ -326,7 +369,7 @@
 
       <!-- ============ CAPABILITIES ============ -->
       <section class="capability-section">
-        <div class="section-heading">
+        <div v-reveal class="section-heading">
           <div>
             <span class="section-index">04 / CORE SYSTEM</span>
             <h2>{{ t('home.solutions.title') }}</h2>
@@ -336,8 +379,9 @@
 
         <div class="capability-grid">
           <article
-            v-for="feature in featureItems"
+            v-for="(feature, i) in featureItems"
             :key="feature.titleKey"
+            v-reveal="i * 100"
             class="capability-item"
             :class="`capability-item--${feature.accent}`"
           >
@@ -354,7 +398,7 @@
 
       <!-- ============ PROVIDERS ============ -->
       <section class="provider-section">
-        <div class="section-heading">
+        <div v-reveal class="section-heading">
           <div>
             <span class="section-index">05 / UPSTREAM NETWORK</span>
             <h2>{{ t('home.providers.title') }}</h2>
@@ -362,7 +406,7 @@
           <p>{{ t('home.providers.description') }}</p>
         </div>
 
-        <div class="provider-marquee">
+        <div v-reveal class="provider-marquee">
           <div class="provider-marquee-track">
             <div
               v-for="copyIndex in 2"
@@ -393,7 +437,7 @@
 
       <!-- ============ USAGE MODES ============ -->
       <section class="modes-section">
-        <div class="section-heading section-heading--center">
+        <div v-reveal class="section-heading section-heading--center">
           <span class="section-index">06 / USAGE MODES</span>
           <h2>{{ t('home.modes.title') }}</h2>
           <p>{{ t('home.modes.subtitle') }}</p>
@@ -401,8 +445,9 @@
 
         <div class="modes-grid">
           <article
-            v-for="mode in usageModes"
+            v-for="(mode, i) in usageModes"
             :key="mode.id"
+            v-reveal="i * 120"
             class="mode-card"
             :class="`mode-card--${mode.tone}`"
           >
@@ -428,7 +473,7 @@
 
       <!-- ============ CTA ============ -->
       <section class="cta-section">
-        <div class="cta-panel">
+        <div v-reveal class="cta-panel">
           <span class="cta-glow" aria-hidden="true"></span>
           <h2>{{ t('home.cta.title') }}</h2>
           <p>{{ t('home.cta.description') }}</p>
@@ -470,7 +515,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore, useAppStore } from '@/stores'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
@@ -478,6 +523,8 @@ import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import CosmicBackdrop from '@/components/common/CosmicBackdrop.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { sanitizeUrl } from '@/utils/url'
+import { useTrafficStream, type TrafficEvent } from '@/composables/useTrafficStream'
+import { execTerminalCommand } from '@/utils/terminalCommands'
 import type { GroupPlatform } from '@/types'
 
 const { t } = useI18n()
@@ -545,52 +592,164 @@ const heroStats = [
   { value: '<1s', labelKey: 'home.stats.failover' }
 ] as const
 
-type PoolAccount = {
-  id: string
+type PoolNodeState = 'ok' | 'limited' | 'down' | 'disabled'
+type PoolNode = {
+  tag: string
   platform: GroupPlatform
-  plan: string
-  health: number
-  state: 'routed' | 'active' | 'standby'
-  delay: number
+  state: PoolNodeState
 }
 
-const poolAccounts = ref<PoolAccount[]>([
-  { id: 'acc_7f3a', platform: 'anthropic', plan: 'claude · max', health: 97, state: 'routed', delay: 0 },
-  { id: 'acc_92k1', platform: 'openai', plan: 'gpt · pro', health: 92, state: 'active', delay: 120 },
-  { id: 'acc_c4d8', platform: 'gemini', plan: 'gemini · ultra', health: 88, state: 'active', delay: 240 },
-  { id: 'acc_5e2f', platform: 'anthropic', plan: 'claude · team', health: 81, state: 'active', delay: 360 },
-  { id: 'acc_b7a3', platform: 'antigravity', plan: 'antigravity', health: 64, state: 'standby', delay: 480 }
-])
+const NODE_STATE_LABELS: Record<PoolNodeState, string> = {
+  ok: 'OK',
+  limited: 'LIMITED',
+  down: 'DOWN',
+  disabled: 'OFF'
+}
 
-// Rotate the ROUTED highlight across healthy accounts and jitter the health
-// bars so the console reads as a live control plane, not a static mock.
-const routeLatency = ref(48)
-const routedAccount = computed(
-  () => poolAccounts.value.find((account) => account.state === 'routed') ?? poolAccounts.value[0]
-)
+// 后端 /api/v1/pool/status 不可用时的展示占位:结构与真实响应一致,
+// 不含任何伪造的量化指标(健康度百分比、假延迟)。
+const FALLBACK_POOL_NODES: PoolNode[] = [
+  { tag: 'node_a7f3b2c1', platform: 'anthropic', state: 'ok' },
+  { tag: 'node_92d1f4e8', platform: 'openai', state: 'ok' },
+  { tag: 'node_c4d8e6a2', platform: 'gemini', state: 'ok' },
+  { tag: 'node_5e2f8b3d', platform: 'anthropic', state: 'ok' },
+  { tag: 'node_b7a3c5d9', platform: 'antigravity', state: 'limited' }
+]
 
-let routerTimer: number | undefined
+const poolNodes = ref<PoolNode[]>([...FALLBACK_POOL_NODES])
+// poolLive: 池状态是否来自真实后端;streamLive: 事件流是否真实 SSE。
+// 两者皆真才算 LIVE,否则控制台标题显示 SIM。
+const poolLive = ref(false)
+const dataLive = computed(() => poolLive.value && streamLive.value)
 
-function startRouteRotation() {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  routerTimer = window.setInterval(() => {
-    const candidates = poolAccounts.value.filter(
-      (account) => account.state !== 'standby' && account.state !== 'routed'
-    )
-    const next = candidates[Math.floor(Math.random() * candidates.length)]
-    if (!next) return
+// ROUTED 高亮由最近一条流量事件驱动:事件携带的匿名 tag 与节点比对。
+const lastRoutedTag = ref('')
+const lastRouteDurationMs = ref(0)
 
-    poolAccounts.value = poolAccounts.value.map((account) => {
-      const state =
-        account.id === next.id ? 'routed' : account.state === 'routed' ? 'active' : account.state
-      const health =
-        account.state === 'standby'
-          ? account.health
-          : Math.min(99, Math.max(62, account.health + Math.round((Math.random() - 0.5) * 5)))
-      return { ...account, state, health }
-    })
-    routeLatency.value = 28 + Math.round(Math.random() * 60)
-  }, 2800)
+async function fetchPoolStatus() {
+  try {
+    const res = await fetch('/api/v1/pool/status', { headers: { Accept: 'application/json' } })
+    if (!res.ok) return
+    const data = await res.json()
+    if (!Array.isArray(data?.accounts)) return
+    poolNodes.value = data.accounts
+      .filter(
+        (n: unknown): n is PoolNode =>
+          !!n && typeof (n as PoolNode).tag === 'string' && typeof (n as PoolNode).platform === 'string'
+      )
+      .slice(0, 5)
+    poolLive.value = true
+  } catch {
+    // 端点不可达(旧后端/离线):保持 fallback 展示
+  }
+}
+
+let poolStatusTimer: number | undefined
+
+// ============ Live traffic stream + interactive terminal ============
+type StreamLine = {
+  id: number
+  kind: 'event' | 'cmd' | 'out'
+  text?: string
+  accent?: 'ok' | 'info' | 'warn' | 'err'
+  /** kind === 'event' 时的结构化事件，用于分段着色渲染 */
+  evt?: { time: string; platform: string; model: string; durationMs: number }
+}
+
+const MAX_STREAM_LINES = 60
+const streamLines = ref<StreamLine[]>([])
+const streamEl = ref<HTMLElement | null>(null)
+const terminalInput = ref('')
+let streamLineId = 0
+
+function trimStreamAndScroll() {
+  if (streamLines.value.length > MAX_STREAM_LINES) {
+    streamLines.value.splice(0, streamLines.value.length - MAX_STREAM_LINES)
+  }
+  nextTick(() => {
+    const el = streamEl.value
+    if (el) el.scrollTop = el.scrollHeight
+  })
+}
+
+function pushStreamLine(kind: StreamLine['kind'], text: string, accent?: StreamLine['accent']) {
+  streamLines.value.push({ id: ++streamLineId, kind, text, accent })
+  trimStreamAndScroll()
+}
+
+const FALLBACK_MODELS: Record<string, string> = {
+  anthropic: 'claude-sonnet-4-5',
+  openai: 'gpt-5',
+  gemini: 'gemini-3-pro',
+  antigravity: 'antigravity'
+}
+
+// SSE 不可用时的合成事件：从展示中的池节点取样（结构与真实事件一致，
+// 携带匿名 tag 以驱动 ROUTED 联动）。
+function synthesizeTrafficEvent(): TrafficEvent {
+  const routable = poolNodes.value.filter((n) => n.state === 'ok' || n.state === 'limited')
+  const pool = routable.length ? routable : poolNodes.value
+  const node = pool[Math.floor(Math.random() * pool.length)] ?? FALLBACK_POOL_NODES[0]
+  return {
+    time: new Date().toISOString(),
+    platform: node.platform,
+    model: FALLBACK_MODELS[node.platform] ?? node.platform,
+    duration_ms: 320 + Math.floor(Math.random() * 2200),
+    stream: Math.random() > 0.2,
+    tag: node.tag
+  }
+}
+
+function formatEventTime(iso: string): string {
+  const d = new Date(iso)
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${hh}:${mm}:${ss}`
+}
+
+function pushTrafficLine(evt: TrafficEvent) {
+  if (evt.tag) {
+    lastRoutedTag.value = evt.tag
+    lastRouteDurationMs.value = evt.duration_ms
+  }
+  streamLines.value.push({
+    id: ++streamLineId,
+    kind: 'event',
+    evt: {
+      time: formatEventTime(evt.time),
+      platform: evt.platform,
+      model: evt.model,
+      durationMs: evt.duration_ms
+    }
+  })
+  trimStreamAndScroll()
+}
+
+const { events: trafficEvents, live: streamLive } = useTrafficStream({
+  fallback: synthesizeTrafficEvent,
+  onEvent: pushTrafficLine
+})
+
+function runCommand() {
+  const raw = terminalInput.value
+  terminalInput.value = ''
+  if (!raw.trim()) return
+
+  const result = execTerminalCommand(raw, {
+    accounts: poolNodes.value,
+    events: trafficEvents.value,
+    docUrl: docUrl.value || undefined,
+    lastRoutedTag: lastRoutedTag.value || undefined
+  })
+  if (result.clear) {
+    streamLines.value = []
+    return
+  }
+  pushStreamLine('cmd', `❯ ${raw.trim()}`)
+  for (const out of result.outputs) {
+    pushStreamLine('out', out.text, out.accent)
+  }
 }
 
 const signalItems = [
@@ -726,7 +885,9 @@ function resetSceneOffset() {
 }
 
 onMounted(() => {
-  startRouteRotation()
+  fetchPoolStatus()
+  // 后端端点自带 15s 缓存，前端 60s 轮询足够新鲜且零压力
+  poolStatusTimer = window.setInterval(fetchPoolStatus, 60_000)
   authStore.checkAuth()
 
   if (!appStore.publicSettingsLoaded) {
@@ -735,7 +896,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  if (routerTimer !== undefined) window.clearInterval(routerTimer)
+  if (poolStatusTimer !== undefined) window.clearInterval(poolStatusTimer)
 })
 </script>
 
@@ -1052,7 +1213,7 @@ main {
   display: grid;
   width: min(1200px, calc(100% - 48px));
   margin: 0 auto;
-  padding: 88px 0 132px;
+  padding: 72px 0 116px;
   grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
   align-items: center;
   gap: 56px;
@@ -1304,6 +1465,34 @@ main {
   backdrop-filter: blur(20px);
 }
 
+/* HUD viewfinder brackets etched just inside the console frame (the outer
+   overflow: hidden would clip any brackets drawn outside the box). Eight
+   corner gradients form the reticle; it brightens while the terminal input
+   is focused, like a targeting lock engaging. */
+.pool-console::after {
+  position: absolute;
+  inset: 6px;
+  background:
+    linear-gradient(to right, var(--home-accent-a) 1.5px, transparent 1.5px) 0 0,
+    linear-gradient(to bottom, var(--home-accent-a) 1.5px, transparent 1.5px) 0 0,
+    linear-gradient(to left, var(--home-accent-a) 1.5px, transparent 1.5px) 100% 0,
+    linear-gradient(to bottom, var(--home-accent-a) 1.5px, transparent 1.5px) 100% 0,
+    linear-gradient(to right, var(--home-accent-a) 1.5px, transparent 1.5px) 0 100%,
+    linear-gradient(to top, var(--home-accent-a) 1.5px, transparent 1.5px) 0 100%,
+    linear-gradient(to left, var(--home-accent-a) 1.5px, transparent 1.5px) 100% 100%,
+    linear-gradient(to top, var(--home-accent-a) 1.5px, transparent 1.5px) 100% 100%;
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  content: '';
+  opacity: 0.3;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+}
+
+.pool-console:focus-within::after {
+  opacity: 0.85;
+}
+
 .console-head {
   display: flex;
   min-height: 46px;
@@ -1378,8 +1567,8 @@ main {
   box-shadow: inset 2px 0 0 var(--home-accent-a);
 }
 
-.pool-row--standby {
-  opacity: 0.55;
+.pool-row--dim {
+  opacity: 0.5;
 }
 
 .pool-platform {
@@ -1416,7 +1605,9 @@ main {
   font-size: 11px;
 }
 
-.pool-health-bar {
+/* State bar: categorical capacity indicator driven by the node's real
+   scheduling state — no fake percentages. Length and color encode state. */
+.pool-state-bar {
   position: relative;
   min-width: 0;
   flex: 1;
@@ -1426,20 +1617,34 @@ main {
   background: color-mix(in srgb, var(--home-border) 70%, transparent);
 }
 
-.pool-health-bar i {
+.pool-state-bar i {
   position: absolute;
   top: 0;
   bottom: 0;
   left: 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--home-accent-fill), var(--home-accent-b));
-  transform-origin: left center;
-  animation: bar-grow 900ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
-  transition: width 600ms ease;
+  transition: width 500ms ease, background-color 500ms ease;
 }
 
-.pool-row--standby .pool-health-bar i {
+.pool-state-bar--ok i {
+  width: 100%;
+  background: linear-gradient(90deg, var(--home-accent-fill), var(--home-accent-b));
+}
+
+.pool-state-bar--limited i {
+  width: 55%;
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.pool-state-bar--down i {
+  width: 18%;
+  background: #f87171;
+}
+
+.pool-state-bar--disabled i {
+  width: 18%;
   background: var(--home-faint);
+  opacity: 0.6;
 }
 
 .pool-state {
@@ -1489,6 +1694,151 @@ main {
   color: var(--home-ok);
   font-size: 11px;
   font-weight: 700;
+}
+
+/* ============ Console: live traffic stream ============ */
+.console-stream {
+  max-height: 74px;
+  overflow-y: auto;
+  padding: 7px 18px;
+  border-bottom: 1px solid var(--home-border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  line-height: 1.6;
+  scrollbar-width: thin;
+  scrollbar-color: var(--home-border-strong) transparent;
+}
+
+.stream-line {
+  overflow: hidden;
+  color: var(--home-faint);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: stream-line-in 260ms ease-out;
+}
+
+.stream-line--event {
+  color: var(--home-faint);
+}
+
+.stream-line--cmd {
+  margin-top: 3px;
+  color: var(--home-accent-a);
+  font-weight: 700;
+}
+
+.stream-line--out {
+  color: var(--home-muted);
+}
+
+.stream-line--ok { color: var(--home-ok); }
+.stream-line--info { color: var(--home-accent-a); }
+.stream-line--warn { color: #fbbf24; }
+.stream-line--err { color: #f87171; }
+
+/* Event lines: segmented coloring so platforms are distinguishable at a
+   glance — dim timestamp, brand-colored dot, bright model, green status. */
+.evt-time {
+  margin-right: 8px;
+  opacity: 0.55;
+}
+
+.evt-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--home-faint);
+  vertical-align: 1px;
+}
+
+.evt-dot--anthropic { background: #d97706; box-shadow: 0 0 6px rgba(217, 119, 6, 0.55); }
+.evt-dot--openai { background: #f4f7f6; box-shadow: 0 0 6px rgba(244, 247, 246, 0.45); }
+.evt-dot--gemini { background: #4285f4; box-shadow: 0 0 6px rgba(66, 133, 244, 0.55); }
+.evt-dot--antigravity { background: #e04c8a; box-shadow: 0 0 6px rgba(224, 76, 138, 0.55); }
+
+.evt-model {
+  margin-right: 8px;
+  color: var(--home-code);
+}
+
+.evt-status {
+  margin-right: 8px;
+  color: var(--home-ok);
+}
+
+.evt-duration {
+  color: var(--home-accent-a);
+}
+
+/* LIVE / SIM data-source badge in the console title: honest about whether
+   the stream is driven by real SSE traffic or the local synthesizer. */
+.live-badge {
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-style: normal;
+  letter-spacing: 0.1em;
+}
+
+.live-badge--on {
+  background: var(--home-ok-soft);
+  color: var(--home-ok);
+}
+
+.live-badge--sim {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+@keyframes stream-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ============ Console: terminal input ============ */
+.console-input {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 18px;
+  background: color-mix(in srgb, var(--home-surface-solid) 70%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  transition: background-color 200ms ease;
+}
+
+.console-input:focus-within {
+  background: color-mix(in srgb, var(--home-accent-soft) 45%, var(--home-surface-solid));
+}
+
+.input-prompt {
+  color: var(--home-accent-a);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.console-input input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--home-text);
+  font-family: inherit;
+  font-size: 11.5px;
+  outline: none;
+  caret-color: var(--home-accent-a);
+}
+
+.console-input input::placeholder {
+  color: var(--home-faint);
+  opacity: 0.55;
 }
 
 .float-chip {
@@ -1618,7 +1968,7 @@ main {
   align-items: flex-end;
   justify-content: space-between;
   gap: 32px;
-  margin-bottom: 40px;
+  margin-bottom: 28px;
 }
 
 .section-heading h2,
@@ -1644,7 +1994,7 @@ main {
 
 .section-heading--center {
   display: block;
-  margin-bottom: 48px;
+  margin-bottom: 32px;
   text-align: center;
 }
 
@@ -1656,7 +2006,7 @@ main {
 
 /* ============ Pool section ============ */
 .pool-section {
-  padding: 120px 0 110px;
+  padding: 80px 0;
 }
 
 .pool-layout {
@@ -1675,7 +2025,7 @@ main {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
-  margin-top: 36px;
+  margin-top: 28px;
 }
 
 .pool-feature {
@@ -1723,7 +2073,7 @@ main {
 
 /* ============ Direct connect section ============ */
 .direct-section {
-  padding: 0 0 120px;
+  padding: 0 0 80px;
 }
 
 .direct-layout {
@@ -1742,12 +2092,12 @@ main {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 14px;
-  margin-top: 36px;
+  margin-top: 28px;
 }
 
 /* ============ Steps ============ */
 .steps-section {
-  padding: 0 0 120px;
+  padding: 0 0 80px;
 }
 
 .steps-flow {
@@ -1848,7 +2198,7 @@ main {
 
 /* ============ Usage Modes ============ */
 .modes-section {
-  padding: 0 0 120px;
+  padding: 0 0 80px;
 }
 
 .modes-grid {
@@ -1980,7 +2330,7 @@ main {
 
 /* ============ Capabilities ============ */
 .capability-section {
-  padding: 0 0 120px;
+  padding: 0 0 80px;
 }
 
 .capability-grid {
@@ -2082,7 +2432,7 @@ main {
 
 /* ============ Providers ============ */
 .provider-section {
-  padding: 0 0 120px;
+  padding: 0 0 80px;
 }
 
 .provider-marquee {
@@ -2188,13 +2538,13 @@ main {
 
 /* ============ CTA ============ */
 .cta-section {
-  padding: 0 0 120px;
+  padding: 0 0 80px;
 }
 
 .cta-panel {
   position: relative;
   overflow: hidden;
-  padding: 72px 40px;
+  padding: 56px 40px;
   border: 1px solid var(--home-border-strong);
   border-radius: 26px;
   background: color-mix(in srgb, var(--home-surface-strong) 90%, transparent);
@@ -2330,11 +2680,6 @@ main {
   78% { left: 125%; }
 }
 
-@keyframes bar-grow {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
-
 @keyframes float-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
@@ -2358,7 +2703,7 @@ main {
 @media (max-width: 1023px) {
   .hero-inner {
     grid-template-columns: 1fr;
-    padding: 64px 0 120px;
+    padding: 56px 0 108px;
     gap: 48px;
   }
 
@@ -2429,7 +2774,7 @@ main {
 
   .hero-inner {
     width: min(100% - 32px, 1200px);
-    padding: 48px 0 108px;
+    padding: 44px 0 96px;
   }
 
   .brand-name,
@@ -2504,7 +2849,7 @@ main {
   }
 
   .pool-section {
-    padding: 88px 0 84px;
+    padding: 60px 0 56px;
   }
 
   .pool-features {
@@ -2530,11 +2875,11 @@ main {
   .capability-section,
   .provider-section,
   .modes-section {
-    padding-bottom: 88px;
+    padding-bottom: 56px;
   }
 
   .steps-flow {
-    gap: 34px;
+    gap: 28px;
   }
 
   .hero-eyebrow {
@@ -2565,11 +2910,11 @@ main {
   }
 
   .cta-section {
-    padding-bottom: 96px;
+    padding-bottom: 60px;
   }
 
   .cta-panel {
-    padding: 52px 24px;
+    padding: 44px 22px;
   }
 
   .footer-inner {

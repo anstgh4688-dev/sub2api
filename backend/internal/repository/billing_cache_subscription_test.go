@@ -4,6 +4,7 @@ package repository
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -17,14 +18,16 @@ func TestSetSubscriptionCache_RejectsOlderSnapshot(t *testing.T) {
 	userID := int64(14)
 	groupID := int64(24)
 	expiresAt := time.Now().Add(time.Hour)
+	dailyLimit := 4.5
 
 	resetSnapshot := &service.SubscriptionCacheData{
-		Status:       service.SubscriptionStatusActive,
-		ExpiresAt:    expiresAt,
-		DailyUsage:   0,
-		WeeklyUsage:  13,
-		MonthlyUsage: 33,
-		Version:      2,
+		Status:             service.SubscriptionStatusActive,
+		ExpiresAt:          expiresAt,
+		DailyUsage:         0,
+		WeeklyUsage:        13,
+		MonthlyUsage:       33,
+		DailyLimitOverride: &dailyLimit,
+		Version:            2,
 	}
 	delayedOldSnapshot := &service.SubscriptionCacheData{
 		Status:       service.SubscriptionStatusActive,
@@ -45,6 +48,8 @@ func TestSetSubscriptionCache_RejectsOlderSnapshot(t *testing.T) {
 	require.InDelta(t, resetSnapshot.DailyUsage, got.DailyUsage, 1e-9)
 	require.InDelta(t, resetSnapshot.WeeklyUsage, got.WeeklyUsage, 1e-9)
 	require.InDelta(t, resetSnapshot.MonthlyUsage, got.MonthlyUsage, 1e-9)
+	require.NotNil(t, got.DailyLimitOverride)
+	require.InDelta(t, dailyLimit, *got.DailyLimitOverride, 1e-9)
 	require.Equal(t, resetSnapshot.Version, got.Version)
 }
 
@@ -91,4 +96,24 @@ func TestInvalidateSubscriptionCache_RemovesLegacyAndRevisionedKeys(t *testing.T
 	require.NoError(t, cache.InvalidateSubscriptionCache(ctx, userID, groupID))
 	require.False(t, redisServer.Exists(billingSubKey(userID, groupID)))
 	require.False(t, redisServer.Exists(billingLegacySubKey(userID, groupID)))
+}
+
+func TestGetSubscriptionCache_RejectsInvalidLimitSnapshot(t *testing.T) {
+	for _, invalid := range []string{"not-a-number", "NaN", "+Inf"} {
+		t.Run(invalid, func(t *testing.T) {
+			cache, redisServer := newMiniRedisCache(t)
+			ctx := context.Background()
+			userID := int64(16)
+			groupID := int64(26)
+			redisServer.HSet(billingSubKey(userID, groupID),
+				subFieldStatus, service.SubscriptionStatusActive,
+				subFieldExpiresAt, strconv.FormatInt(time.Now().Add(time.Hour).Unix(), 10),
+				subFieldDailyLimitOverride, invalid,
+				subFieldRevision, "1",
+			)
+
+			_, err := cache.GetSubscriptionCache(ctx, userID, groupID)
+			require.ErrorContains(t, err, "invalid daily limit")
+		})
+	}
 }

@@ -38,6 +38,9 @@ func (r *userSubscriptionRepository) Create(ctx context.Context, sub *service.Us
 		SetDailyUsageUsd(sub.DailyUsageUSD).
 		SetWeeklyUsageUsd(sub.WeeklyUsageUSD).
 		SetMonthlyUsageUsd(sub.MonthlyUsageUSD).
+		SetNillableDailyLimitOverrideUsd(sub.DailyLimitOverrideUSD).
+		SetNillableWeeklyLimitOverrideUsd(sub.WeeklyLimitOverrideUSD).
+		SetNillableMonthlyLimitOverrideUsd(sub.MonthlyLimitOverrideUSD).
 		SetNillableAssignedBy(sub.AssignedBy)
 
 	if sub.StartsAt.IsZero() {
@@ -149,6 +152,9 @@ func (r *userSubscriptionRepository) Update(ctx context.Context, sub *service.Us
 		SetDailyUsageUsd(sub.DailyUsageUSD).
 		SetWeeklyUsageUsd(sub.WeeklyUsageUSD).
 		SetMonthlyUsageUsd(sub.MonthlyUsageUSD).
+		SetNillableDailyLimitOverrideUsd(sub.DailyLimitOverrideUSD).
+		SetNillableWeeklyLimitOverrideUsd(sub.WeeklyLimitOverrideUSD).
+		SetNillableMonthlyLimitOverrideUsd(sub.MonthlyLimitOverrideUSD).
 		SetNillableAssignedBy(sub.AssignedBy).
 		SetAssignedAt(sub.AssignedAt).
 		SetNotes(sub.Notes)
@@ -368,6 +374,34 @@ func (r *userSubscriptionRepository) UpdateNotes(ctx context.Context, subscripti
 	return translatePersistenceError(err, service.ErrSubscriptionNotFound, nil)
 }
 
+func (r *userSubscriptionRepository) UpdateLimitOverrides(ctx context.Context, subscriptionID int64, input service.UpdateSubscriptionLimitsInput) error {
+	client := clientFromContext(ctx, r.client)
+	builder := client.UserSubscription.UpdateOneID(subscriptionID)
+	if input.DailySet {
+		if input.Daily == nil {
+			builder.ClearDailyLimitOverrideUsd()
+		} else {
+			builder.SetDailyLimitOverrideUsd(*input.Daily)
+		}
+	}
+	if input.WeeklySet {
+		if input.Weekly == nil {
+			builder.ClearWeeklyLimitOverrideUsd()
+		} else {
+			builder.SetWeeklyLimitOverrideUsd(*input.Weekly)
+		}
+	}
+	if input.MonthlySet {
+		if input.Monthly == nil {
+			builder.ClearMonthlyLimitOverrideUsd()
+		} else {
+			builder.SetMonthlyLimitOverrideUsd(*input.Monthly)
+		}
+	}
+	_, err := builder.Save(ctx)
+	return translatePersistenceError(err, service.ErrSubscriptionNotFound, nil)
+}
+
 func (r *userSubscriptionRepository) ActivateWindows(ctx context.Context, id int64, dailyStart, periodicStart time.Time) error {
 	client := clientFromContext(ctx, r.client)
 	n, err := client.UserSubscription.Update().
@@ -385,19 +419,59 @@ func (r *userSubscriptionRepository) ActivateWindows(ctx context.Context, id int
 }
 
 func (r *userSubscriptionRepository) ResetUsageWindows(ctx context.Context, id int64, resetDaily, resetWeekly, resetMonthly bool, dailyStart, periodicStart time.Time) error {
+	if !resetDaily && !resetWeekly && !resetMonthly {
+		return service.ErrInvalidInput
+	}
+
+	// A manual reset grants the selected period's consumed amount back. Charge that
+	// amount to each unreset parent period so the grant still consumes parent quota.
+	// PostgreSQL evaluates every SET expression from the pre-update row, keeping the
+	// transfer and reset atomic even when multiple periods are selected together.
+	const resetSQL = `
+		UPDATE user_subscriptions
+		SET
+			daily_usage_usd = CASE WHEN $2 THEN 0 ELSE daily_usage_usd END,
+			weekly_usage_usd = CASE
+				WHEN $3 THEN 0
+				WHEN $2 THEN weekly_usage_usd + daily_usage_usd
+				ELSE weekly_usage_usd
+			END,
+			monthly_usage_usd = CASE
+				WHEN $4 THEN 0
+				ELSE monthly_usage_usd
+					+ CASE WHEN $2 THEN daily_usage_usd ELSE 0 END
+					+ CASE WHEN $3 THEN weekly_usage_usd ELSE 0 END
+			END,
+			daily_window_start = CASE
+				WHEN $2 THEN $5
+				ELSE COALESCE(daily_window_start, $5)
+			END,
+			weekly_window_start = CASE
+				WHEN $3 THEN $6
+				ELSE COALESCE(weekly_window_start, $6)
+			END,
+			monthly_window_start = CASE
+				WHEN $4 THEN $6
+				ELSE COALESCE(monthly_window_start, $6)
+			END,
+			updated_at = NOW()
+		WHERE id = $1 AND deleted_at IS NULL
+	`
+
 	client := clientFromContext(ctx, r.client)
-	update := client.UserSubscription.UpdateOneID(id)
-	if resetDaily {
-		update.SetDailyUsageUsd(0).SetDailyWindowStart(dailyStart)
+	result, err := client.ExecContext(ctx, resetSQL, id, resetDaily, resetWeekly, resetMonthly, dailyStart, periodicStart)
+	if err != nil {
+		return err
 	}
-	if resetWeekly {
-		update.SetWeeklyUsageUsd(0).SetWeeklyWindowStart(periodicStart)
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
 	}
-	if resetMonthly {
-		update.SetMonthlyUsageUsd(0).SetMonthlyWindowStart(periodicStart)
+	if affected == 0 {
+		return service.ErrSubscriptionNotFound
 	}
-	_, err := update.Save(ctx)
-	return translatePersistenceError(err, service.ErrSubscriptionNotFound, nil)
+	return nil
 }
 
 func (r *userSubscriptionRepository) ResetDailyUsage(ctx context.Context, id int64, expectedWindowStart *time.Time, newWindowStart time.Time) error {
@@ -641,24 +715,28 @@ func userSubscriptionEntityToServiceWithStatusMapping(m *dbent.UserSubscription,
 		status = service.SubscriptionStatusRevoked
 	}
 	out := &service.UserSubscription{
-		ID:                 m.ID,
-		UserID:             m.UserID,
-		GroupID:            m.GroupID,
-		StartsAt:           m.StartsAt,
-		ExpiresAt:          m.ExpiresAt,
-		Status:             status,
-		DailyWindowStart:   m.DailyWindowStart,
-		WeeklyWindowStart:  m.WeeklyWindowStart,
-		MonthlyWindowStart: m.MonthlyWindowStart,
-		DailyUsageUSD:      m.DailyUsageUsd,
-		WeeklyUsageUSD:     m.WeeklyUsageUsd,
-		MonthlyUsageUSD:    m.MonthlyUsageUsd,
-		AssignedBy:         m.AssignedBy,
-		AssignedAt:         m.AssignedAt,
-		Notes:              derefString(m.Notes),
-		CreatedAt:          m.CreatedAt,
-		UpdatedAt:          m.UpdatedAt,
-		DeletedAt:          m.DeletedAt,
+		ID:                      m.ID,
+		UserID:                  m.UserID,
+		GroupID:                 m.GroupID,
+		StartsAt:                m.StartsAt,
+		ExpiresAt:               m.ExpiresAt,
+		Status:                  status,
+		DailyWindowStart:        m.DailyWindowStart,
+		WeeklyWindowStart:       m.WeeklyWindowStart,
+		MonthlyWindowStart:      m.MonthlyWindowStart,
+		DailyUsageUSD:           m.DailyUsageUsd,
+		WeeklyUsageUSD:          m.WeeklyUsageUsd,
+		MonthlyUsageUSD:         m.MonthlyUsageUsd,
+		DailyLimitOverrideUSD:   m.DailyLimitOverrideUsd,
+		WeeklyLimitOverrideUSD:  m.WeeklyLimitOverrideUsd,
+		MonthlyLimitOverrideUSD: m.MonthlyLimitOverrideUsd,
+		AssignedBy:              m.AssignedBy,
+		AssignedAt:              m.AssignedAt,
+		Notes:                   derefString(m.Notes),
+		CreatedAt:               m.CreatedAt,
+		UpdatedAt:               m.UpdatedAt,
+		DeletedAt:               m.DeletedAt,
+		CacheRevision:           m.CacheRevision,
 	}
 	if m.Edges.User != nil {
 		out.User = userEntityToService(m.Edges.User)
@@ -689,4 +767,5 @@ func applyUserSubscriptionEntityToService(dst *service.UserSubscription, src *db
 	dst.ID = src.ID
 	dst.CreatedAt = src.CreatedAt
 	dst.UpdatedAt = src.UpdatedAt
+	dst.CacheRevision = src.CacheRevision
 }

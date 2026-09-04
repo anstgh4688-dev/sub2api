@@ -6,6 +6,7 @@ import i18n, { initI18n } from './i18n'
 import { useAppStore } from '@/stores/app'
 import { updateFavicon } from '@/utils/branding'
 import { isIOSDevice } from '@/utils/device'
+import { vReveal } from './directives/reveal'
 import './style.css'
 
 function initIOSViewportZoomFix() {
@@ -53,6 +54,7 @@ async function bootstrap() {
 
   app.use(router)
   app.use(i18n)
+  app.directive('reveal', vReveal)
 
   // 等待路由器完成初始导航后再挂载，避免竞态条件导致的空白渲染
   await router.isReady()
