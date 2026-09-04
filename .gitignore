@@ -112,6 +112,7 @@ backend/data/
 backend/config.yaml
 deploy/config.yaml
 backend/.installed
+bbgt-m1-reality-mihomo.yaml
 
 # ===================
 # 其他

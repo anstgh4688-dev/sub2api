@@ -3,6 +3,7 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { UserSubscription } from '@/types'
 import SubscriptionQuotaResetDialog from '@/components/admin/subscription/SubscriptionQuotaResetDialog.vue'
+import SubscriptionLimitAdjustDialog from '@/components/admin/subscription/SubscriptionLimitAdjustDialog.vue'
 import SubscriptionQuotaResetView from '../SubscriptionQuotaResetView.vue'
 
 const listSubscriptions = vi.hoisted(() => vi.fn())
@@ -39,6 +40,15 @@ const subscription: UserSubscription = {
   daily_usage_usd: 150.711478,
   weekly_usage_usd: 255.970793,
   monthly_usage_usd: 255.970793,
+  daily_limit_usd: 120,
+  weekly_limit_usd: 300,
+  monthly_limit_usd: 700,
+  group_daily_limit_usd: 150,
+  group_weekly_limit_usd: 300,
+  group_monthly_limit_usd: 900,
+  daily_limit_override_usd: 120,
+  weekly_limit_override_usd: null,
+  monthly_limit_override_usd: 700,
   daily_window_start: '2026-08-04T00:00:00Z',
   weekly_window_start: '2026-08-03T00:00:00Z',
   monthly_window_start: '2026-08-03T00:00:00Z',
@@ -119,7 +129,7 @@ describe('SubscriptionQuotaResetView', () => {
     )
     expect(wrapper.get('[data-test="quota-usage-meter"]').attributes()).toMatchObject({
       'data-used': String(subscription.monthly_usage_usd),
-      'data-limit': String(subscription.group?.monthly_limit_usd)
+      'data-limit': String(subscription.monthly_limit_usd)
     })
 
     const dialog = wrapper.findComponent(SubscriptionQuotaResetDialog)
@@ -127,9 +137,18 @@ describe('SubscriptionQuotaResetView', () => {
     expect(dialog.props('subscription')).toEqual(subscription)
     expect(dialog.props('scopes')).toEqual(['daily', 'weekly', 'monthly'])
 
-    dialog.vm.$emit('reset', subscription)
+    await wrapper.get('[data-test="open-limit-adjust"]').trigger('click')
+    const adjustDialog = wrapper.findComponent(SubscriptionLimitAdjustDialog)
+    expect(adjustDialog.props('show')).toBe(true)
+    expect(adjustDialog.props('subscription')).toEqual(subscription)
+
+    adjustDialog.vm.$emit('updated', subscription)
     await flushPromises()
     expect(listSubscriptions).toHaveBeenCalledTimes(2)
+
+    dialog.vm.$emit('reset', subscription)
+    await flushPromises()
+    expect(listSubscriptions).toHaveBeenCalledTimes(3)
 
     wrapper.unmount()
   })

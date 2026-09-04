@@ -883,25 +883,56 @@ func UserSubscriptionFromServiceAdmin(sub *service.UserSubscription) *AdminUserS
 }
 
 func userSubscriptionFromServiceBase(sub *service.UserSubscription) UserSubscription {
+	effectiveGroup := sub.GroupWithEffectiveLimits(sub.Group)
 	return UserSubscription{
-		ID:                 sub.ID,
-		UserID:             sub.UserID,
-		GroupID:            sub.GroupID,
-		StartsAt:           sub.StartsAt,
-		ExpiresAt:          sub.ExpiresAt,
-		Status:             sub.Status,
-		DailyWindowStart:   sub.DailyWindowStart,
-		WeeklyWindowStart:  sub.WeeklyWindowStart,
-		MonthlyWindowStart: sub.MonthlyWindowStart,
-		DailyUsageUSD:      sub.DailyUsageUSD,
-		WeeklyUsageUSD:     sub.WeeklyUsageUSD,
-		MonthlyUsageUSD:    sub.MonthlyUsageUSD,
-		CreatedAt:          sub.CreatedAt,
-		UpdatedAt:          sub.UpdatedAt,
-		RevokedAt:          sub.DeletedAt,
-		User:               UserFromServiceShallow(sub.User),
-		Group:              GroupFromServiceShallow(sub.Group),
+		ID:                      sub.ID,
+		UserID:                  sub.UserID,
+		GroupID:                 sub.GroupID,
+		StartsAt:                sub.StartsAt,
+		ExpiresAt:               sub.ExpiresAt,
+		Status:                  sub.Status,
+		DailyWindowStart:        sub.DailyWindowStart,
+		WeeklyWindowStart:       sub.WeeklyWindowStart,
+		MonthlyWindowStart:      sub.MonthlyWindowStart,
+		DailyUsageUSD:           sub.DailyUsageUSD,
+		WeeklyUsageUSD:          sub.WeeklyUsageUSD,
+		MonthlyUsageUSD:         sub.MonthlyUsageUSD,
+		DailyLimitUSD:           sub.EffectiveDailyLimitUSD(sub.Group),
+		WeeklyLimitUSD:          sub.EffectiveWeeklyLimitUSD(sub.Group),
+		MonthlyLimitUSD:         sub.EffectiveMonthlyLimitUSD(sub.Group),
+		GroupDailyLimitUSD:      groupDailyLimit(sub.Group),
+		GroupWeeklyLimitUSD:     groupWeeklyLimit(sub.Group),
+		GroupMonthlyLimitUSD:    groupMonthlyLimit(sub.Group),
+		DailyLimitOverrideUSD:   sub.DailyLimitOverrideUSD,
+		WeeklyLimitOverrideUSD:  sub.WeeklyLimitOverrideUSD,
+		MonthlyLimitOverrideUSD: sub.MonthlyLimitOverrideUSD,
+		CreatedAt:               sub.CreatedAt,
+		UpdatedAt:               sub.UpdatedAt,
+		RevokedAt:               sub.DeletedAt,
+		User:                    UserFromServiceShallow(sub.User),
+		Group:                   GroupFromServiceShallow(effectiveGroup),
 	}
+}
+
+func groupDailyLimit(group *service.Group) *float64 {
+	if group == nil {
+		return nil
+	}
+	return group.DailyLimitUSD
+}
+
+func groupWeeklyLimit(group *service.Group) *float64 {
+	if group == nil {
+		return nil
+	}
+	return group.WeeklyLimitUSD
+}
+
+func groupMonthlyLimit(group *service.Group) *float64 {
+	if group == nil {
+		return nil
+	}
+	return group.MonthlyLimitUSD
 }
 
 func BulkAssignResultFromService(r *service.BulkAssignResult) *BulkAssignResult {

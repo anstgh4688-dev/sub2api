@@ -880,6 +880,16 @@ func (s *GatewayService) recordUsageCore(ctx context.Context, input *recordUsage
 	}
 	writeUsageLogBestEffort(ctx, s.usageLogRepo, usageLog, "service.gateway")
 
+	// 发布匿名流量事件，驱动首页实时请求流光（不含任何用户/账号标识）。
+	PublishTrafficEvent(TrafficEvent{
+		Time:       time.Now(),
+		Platform:   account.Platform,
+		Model:      result.Model,
+		DurationMs: result.Duration.Milliseconds(),
+		Stream:     result.Stream,
+		Tag:        AnonymizeAccountTag(account.ID),
+	})
+
 	return nil
 }
 

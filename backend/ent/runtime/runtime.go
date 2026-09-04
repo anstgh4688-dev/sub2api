@@ -2475,11 +2475,11 @@ func init() {
 	// usersubscription.DefaultMonthlyUsageUsd holds the default value on creation for the monthly_usage_usd field.
 	usersubscription.DefaultMonthlyUsageUsd = usersubscriptionDescMonthlyUsageUsd.Default.(float64)
 	// usersubscriptionDescCacheRevision is the schema descriptor for cache_revision field.
-	usersubscriptionDescCacheRevision := usersubscriptionFields[11].Descriptor()
+	usersubscriptionDescCacheRevision := usersubscriptionFields[14].Descriptor()
 	// usersubscription.DefaultCacheRevision holds the default value on creation for the cache_revision field.
 	usersubscription.DefaultCacheRevision = usersubscriptionDescCacheRevision.Default.(int64)
 	// usersubscriptionDescAssignedAt is the schema descriptor for assigned_at field.
-	usersubscriptionDescAssignedAt := usersubscriptionFields[13].Descriptor()
+	usersubscriptionDescAssignedAt := usersubscriptionFields[16].Descriptor()
 	// usersubscription.DefaultAssignedAt holds the default value on creation for the assigned_at field.
 	usersubscription.DefaultAssignedAt = usersubscriptionDescAssignedAt.Default.(func() time.Time)
 }
