@@ -189,6 +189,48 @@ func (_c *UserSubscriptionCreate) SetNillableMonthlyUsageUsd(v *float64) *UserSu
 	return _c
 }
 
+// SetDailyLimitOverrideUsd sets the "daily_limit_override_usd" field.
+func (_c *UserSubscriptionCreate) SetDailyLimitOverrideUsd(v float64) *UserSubscriptionCreate {
+	_c.mutation.SetDailyLimitOverrideUsd(v)
+	return _c
+}
+
+// SetNillableDailyLimitOverrideUsd sets the "daily_limit_override_usd" field if the given value is not nil.
+func (_c *UserSubscriptionCreate) SetNillableDailyLimitOverrideUsd(v *float64) *UserSubscriptionCreate {
+	if v != nil {
+		_c.SetDailyLimitOverrideUsd(*v)
+	}
+	return _c
+}
+
+// SetWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field.
+func (_c *UserSubscriptionCreate) SetWeeklyLimitOverrideUsd(v float64) *UserSubscriptionCreate {
+	_c.mutation.SetWeeklyLimitOverrideUsd(v)
+	return _c
+}
+
+// SetNillableWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field if the given value is not nil.
+func (_c *UserSubscriptionCreate) SetNillableWeeklyLimitOverrideUsd(v *float64) *UserSubscriptionCreate {
+	if v != nil {
+		_c.SetWeeklyLimitOverrideUsd(*v)
+	}
+	return _c
+}
+
+// SetMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field.
+func (_c *UserSubscriptionCreate) SetMonthlyLimitOverrideUsd(v float64) *UserSubscriptionCreate {
+	_c.mutation.SetMonthlyLimitOverrideUsd(v)
+	return _c
+}
+
+// SetNillableMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field if the given value is not nil.
+func (_c *UserSubscriptionCreate) SetNillableMonthlyLimitOverrideUsd(v *float64) *UserSubscriptionCreate {
+	if v != nil {
+		_c.SetMonthlyLimitOverrideUsd(*v)
+	}
+	return _c
+}
+
 // SetCacheRevision sets the "cache_revision" field.
 func (_c *UserSubscriptionCreate) SetCacheRevision(v int64) *UserSubscriptionCreate {
 	_c.mutation.SetCacheRevision(v)
@@ -493,6 +535,18 @@ func (_c *UserSubscriptionCreate) createSpec() (*UserSubscription, *sqlgraph.Cre
 	if value, ok := _c.mutation.MonthlyUsageUsd(); ok {
 		_spec.SetField(usersubscription.FieldMonthlyUsageUsd, field.TypeFloat64, value)
 		_node.MonthlyUsageUsd = value
+	}
+	if value, ok := _c.mutation.DailyLimitOverrideUsd(); ok {
+		_spec.SetField(usersubscription.FieldDailyLimitOverrideUsd, field.TypeFloat64, value)
+		_node.DailyLimitOverrideUsd = &value
+	}
+	if value, ok := _c.mutation.WeeklyLimitOverrideUsd(); ok {
+		_spec.SetField(usersubscription.FieldWeeklyLimitOverrideUsd, field.TypeFloat64, value)
+		_node.WeeklyLimitOverrideUsd = &value
+	}
+	if value, ok := _c.mutation.MonthlyLimitOverrideUsd(); ok {
+		_spec.SetField(usersubscription.FieldMonthlyLimitOverrideUsd, field.TypeFloat64, value)
+		_node.MonthlyLimitOverrideUsd = &value
 	}
 	if value, ok := _c.mutation.CacheRevision(); ok {
 		_spec.SetField(usersubscription.FieldCacheRevision, field.TypeInt64, value)
@@ -820,6 +874,78 @@ func (u *UserSubscriptionUpsert) UpdateMonthlyUsageUsd() *UserSubscriptionUpsert
 // AddMonthlyUsageUsd adds v to the "monthly_usage_usd" field.
 func (u *UserSubscriptionUpsert) AddMonthlyUsageUsd(v float64) *UserSubscriptionUpsert {
 	u.Add(usersubscription.FieldMonthlyUsageUsd, v)
+	return u
+}
+
+// SetDailyLimitOverrideUsd sets the "daily_limit_override_usd" field.
+func (u *UserSubscriptionUpsert) SetDailyLimitOverrideUsd(v float64) *UserSubscriptionUpsert {
+	u.Set(usersubscription.FieldDailyLimitOverrideUsd, v)
+	return u
+}
+
+// UpdateDailyLimitOverrideUsd sets the "daily_limit_override_usd" field to the value that was provided on create.
+func (u *UserSubscriptionUpsert) UpdateDailyLimitOverrideUsd() *UserSubscriptionUpsert {
+	u.SetExcluded(usersubscription.FieldDailyLimitOverrideUsd)
+	return u
+}
+
+// AddDailyLimitOverrideUsd adds v to the "daily_limit_override_usd" field.
+func (u *UserSubscriptionUpsert) AddDailyLimitOverrideUsd(v float64) *UserSubscriptionUpsert {
+	u.Add(usersubscription.FieldDailyLimitOverrideUsd, v)
+	return u
+}
+
+// ClearDailyLimitOverrideUsd clears the value of the "daily_limit_override_usd" field.
+func (u *UserSubscriptionUpsert) ClearDailyLimitOverrideUsd() *UserSubscriptionUpsert {
+	u.SetNull(usersubscription.FieldDailyLimitOverrideUsd)
+	return u
+}
+
+// SetWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field.
+func (u *UserSubscriptionUpsert) SetWeeklyLimitOverrideUsd(v float64) *UserSubscriptionUpsert {
+	u.Set(usersubscription.FieldWeeklyLimitOverrideUsd, v)
+	return u
+}
+
+// UpdateWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field to the value that was provided on create.
+func (u *UserSubscriptionUpsert) UpdateWeeklyLimitOverrideUsd() *UserSubscriptionUpsert {
+	u.SetExcluded(usersubscription.FieldWeeklyLimitOverrideUsd)
+	return u
+}
+
+// AddWeeklyLimitOverrideUsd adds v to the "weekly_limit_override_usd" field.
+func (u *UserSubscriptionUpsert) AddWeeklyLimitOverrideUsd(v float64) *UserSubscriptionUpsert {
+	u.Add(usersubscription.FieldWeeklyLimitOverrideUsd, v)
+	return u
+}
+
+// ClearWeeklyLimitOverrideUsd clears the value of the "weekly_limit_override_usd" field.
+func (u *UserSubscriptionUpsert) ClearWeeklyLimitOverrideUsd() *UserSubscriptionUpsert {
+	u.SetNull(usersubscription.FieldWeeklyLimitOverrideUsd)
+	return u
+}
+
+// SetMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field.
+func (u *UserSubscriptionUpsert) SetMonthlyLimitOverrideUsd(v float64) *UserSubscriptionUpsert {
+	u.Set(usersubscription.FieldMonthlyLimitOverrideUsd, v)
+	return u
+}
+
+// UpdateMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field to the value that was provided on create.
+func (u *UserSubscriptionUpsert) UpdateMonthlyLimitOverrideUsd() *UserSubscriptionUpsert {
+	u.SetExcluded(usersubscription.FieldMonthlyLimitOverrideUsd)
+	return u
+}
+
+// AddMonthlyLimitOverrideUsd adds v to the "monthly_limit_override_usd" field.
+func (u *UserSubscriptionUpsert) AddMonthlyLimitOverrideUsd(v float64) *UserSubscriptionUpsert {
+	u.Add(usersubscription.FieldMonthlyLimitOverrideUsd, v)
+	return u
+}
+
+// ClearMonthlyLimitOverrideUsd clears the value of the "monthly_limit_override_usd" field.
+func (u *UserSubscriptionUpsert) ClearMonthlyLimitOverrideUsd() *UserSubscriptionUpsert {
+	u.SetNull(usersubscription.FieldMonthlyLimitOverrideUsd)
 	return u
 }
 
@@ -1162,6 +1288,90 @@ func (u *UserSubscriptionUpsertOne) AddMonthlyUsageUsd(v float64) *UserSubscript
 func (u *UserSubscriptionUpsertOne) UpdateMonthlyUsageUsd() *UserSubscriptionUpsertOne {
 	return u.Update(func(s *UserSubscriptionUpsert) {
 		s.UpdateMonthlyUsageUsd()
+	})
+}
+
+// SetDailyLimitOverrideUsd sets the "daily_limit_override_usd" field.
+func (u *UserSubscriptionUpsertOne) SetDailyLimitOverrideUsd(v float64) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetDailyLimitOverrideUsd(v)
+	})
+}
+
+// AddDailyLimitOverrideUsd adds v to the "daily_limit_override_usd" field.
+func (u *UserSubscriptionUpsertOne) AddDailyLimitOverrideUsd(v float64) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.AddDailyLimitOverrideUsd(v)
+	})
+}
+
+// UpdateDailyLimitOverrideUsd sets the "daily_limit_override_usd" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertOne) UpdateDailyLimitOverrideUsd() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateDailyLimitOverrideUsd()
+	})
+}
+
+// ClearDailyLimitOverrideUsd clears the value of the "daily_limit_override_usd" field.
+func (u *UserSubscriptionUpsertOne) ClearDailyLimitOverrideUsd() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.ClearDailyLimitOverrideUsd()
+	})
+}
+
+// SetWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertOne) SetWeeklyLimitOverrideUsd(v float64) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetWeeklyLimitOverrideUsd(v)
+	})
+}
+
+// AddWeeklyLimitOverrideUsd adds v to the "weekly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertOne) AddWeeklyLimitOverrideUsd(v float64) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.AddWeeklyLimitOverrideUsd(v)
+	})
+}
+
+// UpdateWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertOne) UpdateWeeklyLimitOverrideUsd() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateWeeklyLimitOverrideUsd()
+	})
+}
+
+// ClearWeeklyLimitOverrideUsd clears the value of the "weekly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertOne) ClearWeeklyLimitOverrideUsd() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.ClearWeeklyLimitOverrideUsd()
+	})
+}
+
+// SetMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertOne) SetMonthlyLimitOverrideUsd(v float64) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetMonthlyLimitOverrideUsd(v)
+	})
+}
+
+// AddMonthlyLimitOverrideUsd adds v to the "monthly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertOne) AddMonthlyLimitOverrideUsd(v float64) *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.AddMonthlyLimitOverrideUsd(v)
+	})
+}
+
+// UpdateMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertOne) UpdateMonthlyLimitOverrideUsd() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateMonthlyLimitOverrideUsd()
+	})
+}
+
+// ClearMonthlyLimitOverrideUsd clears the value of the "monthly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertOne) ClearMonthlyLimitOverrideUsd() *UserSubscriptionUpsertOne {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.ClearMonthlyLimitOverrideUsd()
 	})
 }
 
@@ -1681,6 +1891,90 @@ func (u *UserSubscriptionUpsertBulk) AddMonthlyUsageUsd(v float64) *UserSubscrip
 func (u *UserSubscriptionUpsertBulk) UpdateMonthlyUsageUsd() *UserSubscriptionUpsertBulk {
 	return u.Update(func(s *UserSubscriptionUpsert) {
 		s.UpdateMonthlyUsageUsd()
+	})
+}
+
+// SetDailyLimitOverrideUsd sets the "daily_limit_override_usd" field.
+func (u *UserSubscriptionUpsertBulk) SetDailyLimitOverrideUsd(v float64) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetDailyLimitOverrideUsd(v)
+	})
+}
+
+// AddDailyLimitOverrideUsd adds v to the "daily_limit_override_usd" field.
+func (u *UserSubscriptionUpsertBulk) AddDailyLimitOverrideUsd(v float64) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.AddDailyLimitOverrideUsd(v)
+	})
+}
+
+// UpdateDailyLimitOverrideUsd sets the "daily_limit_override_usd" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertBulk) UpdateDailyLimitOverrideUsd() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateDailyLimitOverrideUsd()
+	})
+}
+
+// ClearDailyLimitOverrideUsd clears the value of the "daily_limit_override_usd" field.
+func (u *UserSubscriptionUpsertBulk) ClearDailyLimitOverrideUsd() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.ClearDailyLimitOverrideUsd()
+	})
+}
+
+// SetWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertBulk) SetWeeklyLimitOverrideUsd(v float64) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetWeeklyLimitOverrideUsd(v)
+	})
+}
+
+// AddWeeklyLimitOverrideUsd adds v to the "weekly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertBulk) AddWeeklyLimitOverrideUsd(v float64) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.AddWeeklyLimitOverrideUsd(v)
+	})
+}
+
+// UpdateWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertBulk) UpdateWeeklyLimitOverrideUsd() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateWeeklyLimitOverrideUsd()
+	})
+}
+
+// ClearWeeklyLimitOverrideUsd clears the value of the "weekly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertBulk) ClearWeeklyLimitOverrideUsd() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.ClearWeeklyLimitOverrideUsd()
+	})
+}
+
+// SetMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertBulk) SetMonthlyLimitOverrideUsd(v float64) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.SetMonthlyLimitOverrideUsd(v)
+	})
+}
+
+// AddMonthlyLimitOverrideUsd adds v to the "monthly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertBulk) AddMonthlyLimitOverrideUsd(v float64) *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.AddMonthlyLimitOverrideUsd(v)
+	})
+}
+
+// UpdateMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field to the value that was provided on create.
+func (u *UserSubscriptionUpsertBulk) UpdateMonthlyLimitOverrideUsd() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.UpdateMonthlyLimitOverrideUsd()
+	})
+}
+
+// ClearMonthlyLimitOverrideUsd clears the value of the "monthly_limit_override_usd" field.
+func (u *UserSubscriptionUpsertBulk) ClearMonthlyLimitOverrideUsd() *UserSubscriptionUpsertBulk {
+	return u.Update(func(s *UserSubscriptionUpsert) {
+		s.ClearMonthlyLimitOverrideUsd()
 	})
 }
 

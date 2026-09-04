@@ -224,6 +224,43 @@ type ResetSubscriptionQuotaRequest struct {
 	Monthly bool `json:"monthly"`
 }
 
+type UpdateSubscriptionLimitsRequest struct {
+	// Omitted periods are preserved, null inherits the group limit, zero disables
+	// the limit, and positive values set an absolute USD limit.
+	Daily   optionalLimitField `json:"daily_limit_usd"`
+	Weekly  optionalLimitField `json:"weekly_limit_usd"`
+	Monthly optionalLimitField `json:"monthly_limit_usd"`
+}
+
+// UpdateLimits updates subscription-specific quota overrides.
+// PUT /api/v1/admin/subscriptions/:id/limits
+func (h *SubscriptionHandler) UpdateLimits(c *gin.Context) {
+	subscriptionID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid subscription ID")
+		return
+	}
+	var req UpdateSubscriptionLimitsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	if !req.Daily.set && !req.Weekly.set && !req.Monthly.set {
+		response.BadRequest(c, "At least one subscription limit must be provided")
+		return
+	}
+	sub, err := h.subscriptionService.AdminUpdateLimits(c.Request.Context(), subscriptionID, service.UpdateSubscriptionLimitsInput{
+		DailySet: req.Daily.set, Daily: req.Daily.value,
+		WeeklySet: req.Weekly.set, Weekly: req.Weekly.value,
+		MonthlySet: req.Monthly.set, Monthly: req.Monthly.value,
+	})
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, dto.UserSubscriptionFromServiceAdmin(sub))
+}
+
 // ResetQuota resets daily, weekly, and/or monthly usage for a subscription.
 // POST /api/v1/admin/subscriptions/:id/reset-quota
 func (h *SubscriptionHandler) ResetQuota(c *gin.Context) {

@@ -13,6 +13,7 @@ import (
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/timezone"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -408,6 +409,9 @@ func (s *BillingCacheService) GetSubscriptionStatus(ctx context.Context, userID,
 	if err == nil && cacheData != nil {
 		return cacheData, nil
 	}
+	if err != nil && !errors.Is(err, redis.Nil) {
+		logger.LegacyPrintf("service.billing_cache", "Warning: invalid subscription cache for user %d group %d: %v", userID, groupID, err)
+	}
 
 	// 缓存未命中，从数据库读取
 	data, err := s.getSubscriptionFromDB(ctx, userID, groupID)
@@ -452,12 +456,15 @@ func subscriptionCacheSnapshot(sub *UserSubscription) *SubscriptionCacheData {
 		status = SubscriptionStatusRevoked
 	}
 	return &SubscriptionCacheData{
-		Status:       status,
-		ExpiresAt:    sub.ExpiresAt,
-		DailyUsage:   sub.DailyUsageUSD,
-		WeeklyUsage:  sub.WeeklyUsageUSD,
-		MonthlyUsage: sub.MonthlyUsageUSD,
-		Version:      sub.CacheRevision,
+		Status:               status,
+		ExpiresAt:            sub.ExpiresAt,
+		DailyUsage:           sub.DailyUsageUSD,
+		WeeklyUsage:          sub.WeeklyUsageUSD,
+		MonthlyUsage:         sub.MonthlyUsageUSD,
+		DailyLimitOverride:   sub.DailyLimitOverrideUSD,
+		WeeklyLimitOverride:  sub.WeeklyLimitOverrideUSD,
+		MonthlyLimitOverride: sub.MonthlyLimitOverrideUSD,
+		Version:              sub.CacheRevision,
 	}
 }
 
@@ -471,7 +478,13 @@ func (s *BillingCacheService) setSubscriptionCache(ctx context.Context, userID, 
 
 // StoreSubscriptionSnapshot synchronously publishes an exact post-commit snapshot.
 func (s *BillingCacheService) StoreSubscriptionSnapshot(ctx context.Context, userID, groupID int64, data *SubscriptionCacheData) error {
-	return s.setSubscriptionCache(ctx, userID, groupID, data)
+	if err := s.setSubscriptionCache(ctx, userID, groupID, data); err != nil {
+		// A failed revisioned write must not leave an older quota snapshot active.
+		// Deleting the key forces the next eligibility check to reload from DB.
+		invalidateErr := s.cache.InvalidateSubscriptionCache(ctx, userID, groupID)
+		return errors.Join(err, invalidateErr)
+	}
+	return nil
 }
 
 // QueueSubscriptionSnapshot asynchronously publishes an exact post-commit snapshot.
@@ -910,16 +923,29 @@ func (s *BillingCacheService) checkSubscriptionEligibility(ctx context.Context, 
 		return ErrSubscriptionInvalid
 	}
 
-	// 检查限额（使用传入的Group限额配置）
-	if group.HasDailyLimit() && subData.DailyUsage >= *group.DailyLimitUSD {
+	// Cache only subscription overrides. Inherited periods continue to read the
+	// current group limits, so a group edit cannot be shadowed by an old snapshot.
+	dailyLimit := subscription.EffectiveDailyLimitUSD(group)
+	weeklyLimit := subscription.EffectiveWeeklyLimitUSD(group)
+	monthlyLimit := subscription.EffectiveMonthlyLimitUSD(group)
+	if subData.DailyLimitOverride != nil {
+		dailyLimit = subData.DailyLimitOverride
+	}
+	if subData.WeeklyLimitOverride != nil {
+		weeklyLimit = subData.WeeklyLimitOverride
+	}
+	if subData.MonthlyLimitOverride != nil {
+		monthlyLimit = subData.MonthlyLimitOverride
+	}
+	if dailyLimit != nil && *dailyLimit > 0 && subData.DailyUsage >= *dailyLimit {
 		return ErrDailyLimitExceeded
 	}
 
-	if group.HasWeeklyLimit() && subData.WeeklyUsage >= *group.WeeklyLimitUSD {
+	if weeklyLimit != nil && *weeklyLimit > 0 && subData.WeeklyUsage >= *weeklyLimit {
 		return ErrWeeklyLimitExceeded
 	}
 
-	if group.HasMonthlyLimit() && subData.MonthlyUsage >= *group.MonthlyLimitUSD {
+	if monthlyLimit != nil && *monthlyLimit > 0 && subData.MonthlyUsage >= *monthlyLimit {
 		return ErrMonthlyLimitExceeded
 	}
 

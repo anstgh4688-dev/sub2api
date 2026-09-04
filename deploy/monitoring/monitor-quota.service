@@ -1,0 +1,15 @@
+[Unit]
+Description=Minimal CPA account quota reporter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile=/etc/sub2api-monitor.env
+ExecStart=/usr/bin/python3 /usr/local/libexec/sub2api-monitor.py --quota
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/sub2api-monitor

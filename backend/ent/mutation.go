@@ -55365,41 +55365,47 @@ func (m *UserPlatformQuotaMutation) ResetEdge(name string) error {
 // UserSubscriptionMutation represents an operation that mutates the UserSubscription nodes in the graph.
 type UserSubscriptionMutation struct {
 	config
-	op                      Op
-	typ                     string
-	id                      *int64
-	created_at              *time.Time
-	updated_at              *time.Time
-	deleted_at              *time.Time
-	starts_at               *time.Time
-	expires_at              *time.Time
-	status                  *string
-	daily_window_start      *time.Time
-	weekly_window_start     *time.Time
-	monthly_window_start    *time.Time
-	daily_usage_usd         *float64
-	adddaily_usage_usd      *float64
-	weekly_usage_usd        *float64
-	addweekly_usage_usd     *float64
-	monthly_usage_usd       *float64
-	addmonthly_usage_usd    *float64
-	cache_revision          *int64
-	addcache_revision       *int64
-	assigned_at             *time.Time
-	notes                   *string
-	clearedFields           map[string]struct{}
-	user                    *int64
-	cleareduser             bool
-	group                   *int64
-	clearedgroup            bool
-	assigned_by_user        *int64
-	clearedassigned_by_user bool
-	usage_logs              map[int64]struct{}
-	removedusage_logs       map[int64]struct{}
-	clearedusage_logs       bool
-	done                    bool
-	oldValue                func(context.Context) (*UserSubscription, error)
-	predicates              []predicate.UserSubscription
+	op                            Op
+	typ                           string
+	id                            *int64
+	created_at                    *time.Time
+	updated_at                    *time.Time
+	deleted_at                    *time.Time
+	starts_at                     *time.Time
+	expires_at                    *time.Time
+	status                        *string
+	daily_window_start            *time.Time
+	weekly_window_start           *time.Time
+	monthly_window_start          *time.Time
+	daily_usage_usd               *float64
+	adddaily_usage_usd            *float64
+	weekly_usage_usd              *float64
+	addweekly_usage_usd           *float64
+	monthly_usage_usd             *float64
+	addmonthly_usage_usd          *float64
+	daily_limit_override_usd      *float64
+	adddaily_limit_override_usd   *float64
+	weekly_limit_override_usd     *float64
+	addweekly_limit_override_usd  *float64
+	monthly_limit_override_usd    *float64
+	addmonthly_limit_override_usd *float64
+	cache_revision                *int64
+	addcache_revision             *int64
+	assigned_at                   *time.Time
+	notes                         *string
+	clearedFields                 map[string]struct{}
+	user                          *int64
+	cleareduser                   bool
+	group                         *int64
+	clearedgroup                  bool
+	assigned_by_user              *int64
+	clearedassigned_by_user       bool
+	usage_logs                    map[int64]struct{}
+	removedusage_logs             map[int64]struct{}
+	clearedusage_logs             bool
+	done                          bool
+	oldValue                      func(context.Context) (*UserSubscription, error)
+	predicates                    []predicate.UserSubscription
 }
 
 var _ ent.Mutation = (*UserSubscriptionMutation)(nil)
@@ -56116,6 +56122,216 @@ func (m *UserSubscriptionMutation) ResetMonthlyUsageUsd() {
 	m.addmonthly_usage_usd = nil
 }
 
+// SetDailyLimitOverrideUsd sets the "daily_limit_override_usd" field.
+func (m *UserSubscriptionMutation) SetDailyLimitOverrideUsd(f float64) {
+	m.daily_limit_override_usd = &f
+	m.adddaily_limit_override_usd = nil
+}
+
+// DailyLimitOverrideUsd returns the value of the "daily_limit_override_usd" field in the mutation.
+func (m *UserSubscriptionMutation) DailyLimitOverrideUsd() (r float64, exists bool) {
+	v := m.daily_limit_override_usd
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDailyLimitOverrideUsd returns the old "daily_limit_override_usd" field's value of the UserSubscription entity.
+// If the UserSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSubscriptionMutation) OldDailyLimitOverrideUsd(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDailyLimitOverrideUsd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDailyLimitOverrideUsd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDailyLimitOverrideUsd: %w", err)
+	}
+	return oldValue.DailyLimitOverrideUsd, nil
+}
+
+// AddDailyLimitOverrideUsd adds f to the "daily_limit_override_usd" field.
+func (m *UserSubscriptionMutation) AddDailyLimitOverrideUsd(f float64) {
+	if m.adddaily_limit_override_usd != nil {
+		*m.adddaily_limit_override_usd += f
+	} else {
+		m.adddaily_limit_override_usd = &f
+	}
+}
+
+// AddedDailyLimitOverrideUsd returns the value that was added to the "daily_limit_override_usd" field in this mutation.
+func (m *UserSubscriptionMutation) AddedDailyLimitOverrideUsd() (r float64, exists bool) {
+	v := m.adddaily_limit_override_usd
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearDailyLimitOverrideUsd clears the value of the "daily_limit_override_usd" field.
+func (m *UserSubscriptionMutation) ClearDailyLimitOverrideUsd() {
+	m.daily_limit_override_usd = nil
+	m.adddaily_limit_override_usd = nil
+	m.clearedFields[usersubscription.FieldDailyLimitOverrideUsd] = struct{}{}
+}
+
+// DailyLimitOverrideUsdCleared returns if the "daily_limit_override_usd" field was cleared in this mutation.
+func (m *UserSubscriptionMutation) DailyLimitOverrideUsdCleared() bool {
+	_, ok := m.clearedFields[usersubscription.FieldDailyLimitOverrideUsd]
+	return ok
+}
+
+// ResetDailyLimitOverrideUsd resets all changes to the "daily_limit_override_usd" field.
+func (m *UserSubscriptionMutation) ResetDailyLimitOverrideUsd() {
+	m.daily_limit_override_usd = nil
+	m.adddaily_limit_override_usd = nil
+	delete(m.clearedFields, usersubscription.FieldDailyLimitOverrideUsd)
+}
+
+// SetWeeklyLimitOverrideUsd sets the "weekly_limit_override_usd" field.
+func (m *UserSubscriptionMutation) SetWeeklyLimitOverrideUsd(f float64) {
+	m.weekly_limit_override_usd = &f
+	m.addweekly_limit_override_usd = nil
+}
+
+// WeeklyLimitOverrideUsd returns the value of the "weekly_limit_override_usd" field in the mutation.
+func (m *UserSubscriptionMutation) WeeklyLimitOverrideUsd() (r float64, exists bool) {
+	v := m.weekly_limit_override_usd
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWeeklyLimitOverrideUsd returns the old "weekly_limit_override_usd" field's value of the UserSubscription entity.
+// If the UserSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSubscriptionMutation) OldWeeklyLimitOverrideUsd(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWeeklyLimitOverrideUsd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWeeklyLimitOverrideUsd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWeeklyLimitOverrideUsd: %w", err)
+	}
+	return oldValue.WeeklyLimitOverrideUsd, nil
+}
+
+// AddWeeklyLimitOverrideUsd adds f to the "weekly_limit_override_usd" field.
+func (m *UserSubscriptionMutation) AddWeeklyLimitOverrideUsd(f float64) {
+	if m.addweekly_limit_override_usd != nil {
+		*m.addweekly_limit_override_usd += f
+	} else {
+		m.addweekly_limit_override_usd = &f
+	}
+}
+
+// AddedWeeklyLimitOverrideUsd returns the value that was added to the "weekly_limit_override_usd" field in this mutation.
+func (m *UserSubscriptionMutation) AddedWeeklyLimitOverrideUsd() (r float64, exists bool) {
+	v := m.addweekly_limit_override_usd
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearWeeklyLimitOverrideUsd clears the value of the "weekly_limit_override_usd" field.
+func (m *UserSubscriptionMutation) ClearWeeklyLimitOverrideUsd() {
+	m.weekly_limit_override_usd = nil
+	m.addweekly_limit_override_usd = nil
+	m.clearedFields[usersubscription.FieldWeeklyLimitOverrideUsd] = struct{}{}
+}
+
+// WeeklyLimitOverrideUsdCleared returns if the "weekly_limit_override_usd" field was cleared in this mutation.
+func (m *UserSubscriptionMutation) WeeklyLimitOverrideUsdCleared() bool {
+	_, ok := m.clearedFields[usersubscription.FieldWeeklyLimitOverrideUsd]
+	return ok
+}
+
+// ResetWeeklyLimitOverrideUsd resets all changes to the "weekly_limit_override_usd" field.
+func (m *UserSubscriptionMutation) ResetWeeklyLimitOverrideUsd() {
+	m.weekly_limit_override_usd = nil
+	m.addweekly_limit_override_usd = nil
+	delete(m.clearedFields, usersubscription.FieldWeeklyLimitOverrideUsd)
+}
+
+// SetMonthlyLimitOverrideUsd sets the "monthly_limit_override_usd" field.
+func (m *UserSubscriptionMutation) SetMonthlyLimitOverrideUsd(f float64) {
+	m.monthly_limit_override_usd = &f
+	m.addmonthly_limit_override_usd = nil
+}
+
+// MonthlyLimitOverrideUsd returns the value of the "monthly_limit_override_usd" field in the mutation.
+func (m *UserSubscriptionMutation) MonthlyLimitOverrideUsd() (r float64, exists bool) {
+	v := m.monthly_limit_override_usd
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMonthlyLimitOverrideUsd returns the old "monthly_limit_override_usd" field's value of the UserSubscription entity.
+// If the UserSubscription object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserSubscriptionMutation) OldMonthlyLimitOverrideUsd(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMonthlyLimitOverrideUsd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMonthlyLimitOverrideUsd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMonthlyLimitOverrideUsd: %w", err)
+	}
+	return oldValue.MonthlyLimitOverrideUsd, nil
+}
+
+// AddMonthlyLimitOverrideUsd adds f to the "monthly_limit_override_usd" field.
+func (m *UserSubscriptionMutation) AddMonthlyLimitOverrideUsd(f float64) {
+	if m.addmonthly_limit_override_usd != nil {
+		*m.addmonthly_limit_override_usd += f
+	} else {
+		m.addmonthly_limit_override_usd = &f
+	}
+}
+
+// AddedMonthlyLimitOverrideUsd returns the value that was added to the "monthly_limit_override_usd" field in this mutation.
+func (m *UserSubscriptionMutation) AddedMonthlyLimitOverrideUsd() (r float64, exists bool) {
+	v := m.addmonthly_limit_override_usd
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMonthlyLimitOverrideUsd clears the value of the "monthly_limit_override_usd" field.
+func (m *UserSubscriptionMutation) ClearMonthlyLimitOverrideUsd() {
+	m.monthly_limit_override_usd = nil
+	m.addmonthly_limit_override_usd = nil
+	m.clearedFields[usersubscription.FieldMonthlyLimitOverrideUsd] = struct{}{}
+}
+
+// MonthlyLimitOverrideUsdCleared returns if the "monthly_limit_override_usd" field was cleared in this mutation.
+func (m *UserSubscriptionMutation) MonthlyLimitOverrideUsdCleared() bool {
+	_, ok := m.clearedFields[usersubscription.FieldMonthlyLimitOverrideUsd]
+	return ok
+}
+
+// ResetMonthlyLimitOverrideUsd resets all changes to the "monthly_limit_override_usd" field.
+func (m *UserSubscriptionMutation) ResetMonthlyLimitOverrideUsd() {
+	m.monthly_limit_override_usd = nil
+	m.addmonthly_limit_override_usd = nil
+	delete(m.clearedFields, usersubscription.FieldMonthlyLimitOverrideUsd)
+}
+
 // SetCacheRevision sets the "cache_revision" field.
 func (m *UserSubscriptionMutation) SetCacheRevision(i int64) {
 	m.cache_revision = &i
@@ -56488,7 +56704,7 @@ func (m *UserSubscriptionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserSubscriptionMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 21)
 	if m.created_at != nil {
 		fields = append(fields, usersubscription.FieldCreatedAt)
 	}
@@ -56530,6 +56746,15 @@ func (m *UserSubscriptionMutation) Fields() []string {
 	}
 	if m.monthly_usage_usd != nil {
 		fields = append(fields, usersubscription.FieldMonthlyUsageUsd)
+	}
+	if m.daily_limit_override_usd != nil {
+		fields = append(fields, usersubscription.FieldDailyLimitOverrideUsd)
+	}
+	if m.weekly_limit_override_usd != nil {
+		fields = append(fields, usersubscription.FieldWeeklyLimitOverrideUsd)
+	}
+	if m.monthly_limit_override_usd != nil {
+		fields = append(fields, usersubscription.FieldMonthlyLimitOverrideUsd)
 	}
 	if m.cache_revision != nil {
 		fields = append(fields, usersubscription.FieldCacheRevision)
@@ -56579,6 +56804,12 @@ func (m *UserSubscriptionMutation) Field(name string) (ent.Value, bool) {
 		return m.WeeklyUsageUsd()
 	case usersubscription.FieldMonthlyUsageUsd:
 		return m.MonthlyUsageUsd()
+	case usersubscription.FieldDailyLimitOverrideUsd:
+		return m.DailyLimitOverrideUsd()
+	case usersubscription.FieldWeeklyLimitOverrideUsd:
+		return m.WeeklyLimitOverrideUsd()
+	case usersubscription.FieldMonthlyLimitOverrideUsd:
+		return m.MonthlyLimitOverrideUsd()
 	case usersubscription.FieldCacheRevision:
 		return m.CacheRevision()
 	case usersubscription.FieldAssignedBy:
@@ -56624,6 +56855,12 @@ func (m *UserSubscriptionMutation) OldField(ctx context.Context, name string) (e
 		return m.OldWeeklyUsageUsd(ctx)
 	case usersubscription.FieldMonthlyUsageUsd:
 		return m.OldMonthlyUsageUsd(ctx)
+	case usersubscription.FieldDailyLimitOverrideUsd:
+		return m.OldDailyLimitOverrideUsd(ctx)
+	case usersubscription.FieldWeeklyLimitOverrideUsd:
+		return m.OldWeeklyLimitOverrideUsd(ctx)
+	case usersubscription.FieldMonthlyLimitOverrideUsd:
+		return m.OldMonthlyLimitOverrideUsd(ctx)
 	case usersubscription.FieldCacheRevision:
 		return m.OldCacheRevision(ctx)
 	case usersubscription.FieldAssignedBy:
@@ -56739,6 +56976,27 @@ func (m *UserSubscriptionMutation) SetField(name string, value ent.Value) error 
 		}
 		m.SetMonthlyUsageUsd(v)
 		return nil
+	case usersubscription.FieldDailyLimitOverrideUsd:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDailyLimitOverrideUsd(v)
+		return nil
+	case usersubscription.FieldWeeklyLimitOverrideUsd:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWeeklyLimitOverrideUsd(v)
+		return nil
+	case usersubscription.FieldMonthlyLimitOverrideUsd:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMonthlyLimitOverrideUsd(v)
+		return nil
 	case usersubscription.FieldCacheRevision:
 		v, ok := value.(int64)
 		if !ok {
@@ -56784,6 +57042,15 @@ func (m *UserSubscriptionMutation) AddedFields() []string {
 	if m.addmonthly_usage_usd != nil {
 		fields = append(fields, usersubscription.FieldMonthlyUsageUsd)
 	}
+	if m.adddaily_limit_override_usd != nil {
+		fields = append(fields, usersubscription.FieldDailyLimitOverrideUsd)
+	}
+	if m.addweekly_limit_override_usd != nil {
+		fields = append(fields, usersubscription.FieldWeeklyLimitOverrideUsd)
+	}
+	if m.addmonthly_limit_override_usd != nil {
+		fields = append(fields, usersubscription.FieldMonthlyLimitOverrideUsd)
+	}
 	if m.addcache_revision != nil {
 		fields = append(fields, usersubscription.FieldCacheRevision)
 	}
@@ -56801,6 +57068,12 @@ func (m *UserSubscriptionMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedWeeklyUsageUsd()
 	case usersubscription.FieldMonthlyUsageUsd:
 		return m.AddedMonthlyUsageUsd()
+	case usersubscription.FieldDailyLimitOverrideUsd:
+		return m.AddedDailyLimitOverrideUsd()
+	case usersubscription.FieldWeeklyLimitOverrideUsd:
+		return m.AddedWeeklyLimitOverrideUsd()
+	case usersubscription.FieldMonthlyLimitOverrideUsd:
+		return m.AddedMonthlyLimitOverrideUsd()
 	case usersubscription.FieldCacheRevision:
 		return m.AddedCacheRevision()
 	}
@@ -56833,6 +57106,27 @@ func (m *UserSubscriptionMutation) AddField(name string, value ent.Value) error 
 		}
 		m.AddMonthlyUsageUsd(v)
 		return nil
+	case usersubscription.FieldDailyLimitOverrideUsd:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDailyLimitOverrideUsd(v)
+		return nil
+	case usersubscription.FieldWeeklyLimitOverrideUsd:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddWeeklyLimitOverrideUsd(v)
+		return nil
+	case usersubscription.FieldMonthlyLimitOverrideUsd:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMonthlyLimitOverrideUsd(v)
+		return nil
 	case usersubscription.FieldCacheRevision:
 		v, ok := value.(int64)
 		if !ok {
@@ -56859,6 +57153,15 @@ func (m *UserSubscriptionMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(usersubscription.FieldMonthlyWindowStart) {
 		fields = append(fields, usersubscription.FieldMonthlyWindowStart)
+	}
+	if m.FieldCleared(usersubscription.FieldDailyLimitOverrideUsd) {
+		fields = append(fields, usersubscription.FieldDailyLimitOverrideUsd)
+	}
+	if m.FieldCleared(usersubscription.FieldWeeklyLimitOverrideUsd) {
+		fields = append(fields, usersubscription.FieldWeeklyLimitOverrideUsd)
+	}
+	if m.FieldCleared(usersubscription.FieldMonthlyLimitOverrideUsd) {
+		fields = append(fields, usersubscription.FieldMonthlyLimitOverrideUsd)
 	}
 	if m.FieldCleared(usersubscription.FieldAssignedBy) {
 		fields = append(fields, usersubscription.FieldAssignedBy)
@@ -56891,6 +57194,15 @@ func (m *UserSubscriptionMutation) ClearField(name string) error {
 		return nil
 	case usersubscription.FieldMonthlyWindowStart:
 		m.ClearMonthlyWindowStart()
+		return nil
+	case usersubscription.FieldDailyLimitOverrideUsd:
+		m.ClearDailyLimitOverrideUsd()
+		return nil
+	case usersubscription.FieldWeeklyLimitOverrideUsd:
+		m.ClearWeeklyLimitOverrideUsd()
+		return nil
+	case usersubscription.FieldMonthlyLimitOverrideUsd:
+		m.ClearMonthlyLimitOverrideUsd()
 		return nil
 	case usersubscription.FieldAssignedBy:
 		m.ClearAssignedBy()
@@ -56947,6 +57259,15 @@ func (m *UserSubscriptionMutation) ResetField(name string) error {
 		return nil
 	case usersubscription.FieldMonthlyUsageUsd:
 		m.ResetMonthlyUsageUsd()
+		return nil
+	case usersubscription.FieldDailyLimitOverrideUsd:
+		m.ResetDailyLimitOverrideUsd()
+		return nil
+	case usersubscription.FieldWeeklyLimitOverrideUsd:
+		m.ResetWeeklyLimitOverrideUsd()
+		return nil
+	case usersubscription.FieldMonthlyLimitOverrideUsd:
+		m.ResetMonthlyLimitOverrideUsd()
 		return nil
 	case usersubscription.FieldCacheRevision:
 		m.ResetCacheRevision()

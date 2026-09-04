@@ -762,6 +762,16 @@ type UserSubscription struct {
 	WeeklyUsageUSD  float64 `json:"weekly_usage_usd"`
 	MonthlyUsageUSD float64 `json:"monthly_usage_usd"`
 
+	DailyLimitUSD           *float64 `json:"daily_limit_usd"`
+	WeeklyLimitUSD          *float64 `json:"weekly_limit_usd"`
+	MonthlyLimitUSD         *float64 `json:"monthly_limit_usd"`
+	GroupDailyLimitUSD      *float64 `json:"group_daily_limit_usd"`
+	GroupWeeklyLimitUSD     *float64 `json:"group_weekly_limit_usd"`
+	GroupMonthlyLimitUSD    *float64 `json:"group_monthly_limit_usd"`
+	DailyLimitOverrideUSD   *float64 `json:"daily_limit_override_usd"`
+	WeeklyLimitOverrideUSD  *float64 `json:"weekly_limit_override_usd"`
+	MonthlyLimitOverrideUSD *float64 `json:"monthly_limit_override_usd"`
+
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 	RevokedAt *time.Time `json:"revoked_at,omitempty"`

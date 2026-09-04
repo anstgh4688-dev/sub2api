@@ -43,6 +43,12 @@ const (
 	FieldWeeklyUsageUsd = "weekly_usage_usd"
 	// FieldMonthlyUsageUsd holds the string denoting the monthly_usage_usd field in the database.
 	FieldMonthlyUsageUsd = "monthly_usage_usd"
+	// FieldDailyLimitOverrideUsd holds the string denoting the daily_limit_override_usd field in the database.
+	FieldDailyLimitOverrideUsd = "daily_limit_override_usd"
+	// FieldWeeklyLimitOverrideUsd holds the string denoting the weekly_limit_override_usd field in the database.
+	FieldWeeklyLimitOverrideUsd = "weekly_limit_override_usd"
+	// FieldMonthlyLimitOverrideUsd holds the string denoting the monthly_limit_override_usd field in the database.
+	FieldMonthlyLimitOverrideUsd = "monthly_limit_override_usd"
 	// FieldCacheRevision holds the string denoting the cache_revision field in the database.
 	FieldCacheRevision = "cache_revision"
 	// FieldAssignedBy holds the string denoting the assigned_by field in the database.
@@ -108,6 +114,9 @@ var Columns = []string{
 	FieldDailyUsageUsd,
 	FieldWeeklyUsageUsd,
 	FieldMonthlyUsageUsd,
+	FieldDailyLimitOverrideUsd,
+	FieldWeeklyLimitOverrideUsd,
+	FieldMonthlyLimitOverrideUsd,
 	FieldCacheRevision,
 	FieldAssignedBy,
 	FieldAssignedAt,
@@ -230,6 +239,21 @@ func ByWeeklyUsageUsd(opts ...sql.OrderTermOption) OrderOption {
 // ByMonthlyUsageUsd orders the results by the monthly_usage_usd field.
 func ByMonthlyUsageUsd(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMonthlyUsageUsd, opts...).ToFunc()
+}
+
+// ByDailyLimitOverrideUsd orders the results by the daily_limit_override_usd field.
+func ByDailyLimitOverrideUsd(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDailyLimitOverrideUsd, opts...).ToFunc()
+}
+
+// ByWeeklyLimitOverrideUsd orders the results by the weekly_limit_override_usd field.
+func ByWeeklyLimitOverrideUsd(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWeeklyLimitOverrideUsd, opts...).ToFunc()
+}
+
+// ByMonthlyLimitOverrideUsd orders the results by the monthly_limit_override_usd field.
+func ByMonthlyLimitOverrideUsd(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMonthlyLimitOverrideUsd, opts...).ToFunc()
 }
 
 // ByCacheRevision orders the results by the cache_revision field.

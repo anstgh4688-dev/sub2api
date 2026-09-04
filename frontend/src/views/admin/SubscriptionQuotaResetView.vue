@@ -104,21 +104,21 @@
           <template #cell-daily="{ row }">
             <QuotaUsageMeter
               :used="row.daily_usage_usd"
-              :limit="row.group?.daily_limit_usd"
+              :limit="row.daily_limit_usd"
             />
           </template>
 
           <template #cell-weekly="{ row }">
             <QuotaUsageMeter
               :used="row.weekly_usage_usd"
-              :limit="row.group?.weekly_limit_usd"
+              :limit="row.weekly_limit_usd"
             />
           </template>
 
           <template #cell-monthly="{ row }">
             <QuotaUsageMeter
               :used="row.monthly_usage_usd"
-              :limit="row.group?.monthly_limit_usd"
+              :limit="row.monthly_limit_usd"
             />
           </template>
 
@@ -132,15 +132,26 @@
           </template>
 
           <template #cell-actions="{ row }">
-            <button
-              type="button"
-              class="btn btn-secondary btn-sm whitespace-nowrap"
-              data-test="open-quota-reset"
-              @click="openResetDialog(row)"
-            >
-              <Icon name="refresh" size="sm" />
-              {{ t('admin.subscriptions.resetQuota') }}
-            </button>
+            <div class="flex justify-end gap-2">
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm whitespace-nowrap"
+                data-test="open-limit-adjust"
+                @click="openAdjustDialog(row)"
+              >
+                <Icon name="edit" size="sm" />
+                {{ t('admin.subscriptions.adjustLimits') }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm whitespace-nowrap"
+                data-test="open-quota-reset"
+                @click="openResetDialog(row)"
+              >
+                <Icon name="refresh" size="sm" />
+                {{ t('admin.subscriptions.resetQuota') }}
+              </button>
+            </div>
           </template>
 
           <template #empty>
@@ -170,6 +181,12 @@
       @close="closeResetDialog"
       @reset="handleResetSuccess"
     />
+    <SubscriptionLimitAdjustDialog
+      :show="showAdjustDialog"
+      :subscription="adjustingSubscription"
+      @close="closeAdjustDialog"
+      @updated="handleAdjustSuccess"
+    />
   </AppLayout>
 </template>
 
@@ -191,6 +208,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import Icon from '@/components/icons/Icon.vue'
 import QuotaUsageMeter from '@/components/admin/subscription/QuotaUsageMeter.vue'
 import SubscriptionQuotaResetDialog from '@/components/admin/subscription/SubscriptionQuotaResetDialog.vue'
+import SubscriptionLimitAdjustDialog from '@/components/admin/subscription/SubscriptionLimitAdjustDialog.vue'
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -205,6 +223,8 @@ const showUserDropdown = ref(false)
 const selectedUser = ref<SimpleUser | null>(null)
 const showResetDialog = ref(false)
 const resettingSubscription = ref<UserSubscription | null>(null)
+const showAdjustDialog = ref(false)
+const adjustingSubscription = ref<UserSubscription | null>(null)
 let userSearchTimer: ReturnType<typeof setTimeout> | null = null
 let requestController: AbortController | null = null
 
@@ -329,6 +349,20 @@ const closeResetDialog = () => {
 }
 
 const handleResetSuccess = () => {
+  void loadSubscriptions()
+}
+
+const openAdjustDialog = (subscription: UserSubscription) => {
+  adjustingSubscription.value = subscription
+  showAdjustDialog.value = true
+}
+
+const closeAdjustDialog = () => {
+  showAdjustDialog.value = false
+  adjustingSubscription.value = null
+}
+
+const handleAdjustSuccess = () => {
   void loadSubscriptions()
 }
 

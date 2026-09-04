@@ -34,6 +34,7 @@ func SetupRouter(
 	opsService *service.OpsService,
 	settingService *service.SettingService,
 	compositeResolver *service.CompositeRouteResolver,
+	accountService *service.AccountService,
 	cfg *config.Config,
 	redisClient *redis.Client,
 ) *gin.Engine {
@@ -90,7 +91,7 @@ func SetupRouter(
 	}
 
 	// 注册路由
-	registerRoutes(r, handlers, jwtAuth, optionalJWTAuth, adminAuth, apiKeyAuth, auditLog, stepUpAuth, apiKeyService, subscriptionService, opsService, settingService, compositeResolver, cfg, redisClient)
+	registerRoutes(r, handlers, jwtAuth, optionalJWTAuth, adminAuth, apiKeyAuth, auditLog, stepUpAuth, apiKeyService, subscriptionService, opsService, settingService, compositeResolver, accountService, cfg, redisClient)
 
 	return r
 }
@@ -110,6 +111,7 @@ func registerRoutes(
 	opsService *service.OpsService,
 	settingService *service.SettingService,
 	compositeResolver *service.CompositeRouteResolver,
+	accountService *service.AccountService,
 	cfg *config.Config,
 	redisClient *redis.Client,
 ) {
@@ -126,6 +128,8 @@ func registerRoutes(
 	// 注册各模块路由
 	routes.RegisterAuthRoutes(v1, h, jwtAuth, auditLog, redisClient, settingService, panelRateLimiter)
 	routes.RegisterIntelligenceRadarRoutes(v1)
+	routes.RegisterTrafficEventRoutes(v1)
+	routes.RegisterPoolStatusRoutes(v1, accountService)
 	routes.RegisterUserRoutes(v1, h, jwtAuth, auditLog, settingService, panelRateLimiter)
 	routes.RegisterModelPlazaRoutes(v1, h, optionalJWTAuth, settingService, panelRateLimiter)
 	routes.RegisterAdminRoutes(v1, h, adminAuth, auditLog, stepUpAuth, settingService, panelRateLimiter)

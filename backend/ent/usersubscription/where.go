@@ -125,6 +125,21 @@ func MonthlyUsageUsd(v float64) predicate.UserSubscription {
 	return predicate.UserSubscription(sql.FieldEQ(FieldMonthlyUsageUsd, v))
 }
 
+// DailyLimitOverrideUsd applies equality check predicate on the "daily_limit_override_usd" field. It's identical to DailyLimitOverrideUsdEQ.
+func DailyLimitOverrideUsd(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldEQ(FieldDailyLimitOverrideUsd, v))
+}
+
+// WeeklyLimitOverrideUsd applies equality check predicate on the "weekly_limit_override_usd" field. It's identical to WeeklyLimitOverrideUsdEQ.
+func WeeklyLimitOverrideUsd(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldEQ(FieldWeeklyLimitOverrideUsd, v))
+}
+
+// MonthlyLimitOverrideUsd applies equality check predicate on the "monthly_limit_override_usd" field. It's identical to MonthlyLimitOverrideUsdEQ.
+func MonthlyLimitOverrideUsd(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldEQ(FieldMonthlyLimitOverrideUsd, v))
+}
+
 // CacheRevision applies equality check predicate on the "cache_revision" field. It's identical to CacheRevisionEQ.
 func CacheRevision(v int64) predicate.UserSubscription {
 	return predicate.UserSubscription(sql.FieldEQ(FieldCacheRevision, v))
@@ -728,6 +743,156 @@ func MonthlyUsageUsdLT(v float64) predicate.UserSubscription {
 // MonthlyUsageUsdLTE applies the LTE predicate on the "monthly_usage_usd" field.
 func MonthlyUsageUsdLTE(v float64) predicate.UserSubscription {
 	return predicate.UserSubscription(sql.FieldLTE(FieldMonthlyUsageUsd, v))
+}
+
+// DailyLimitOverrideUsdEQ applies the EQ predicate on the "daily_limit_override_usd" field.
+func DailyLimitOverrideUsdEQ(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldEQ(FieldDailyLimitOverrideUsd, v))
+}
+
+// DailyLimitOverrideUsdNEQ applies the NEQ predicate on the "daily_limit_override_usd" field.
+func DailyLimitOverrideUsdNEQ(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNEQ(FieldDailyLimitOverrideUsd, v))
+}
+
+// DailyLimitOverrideUsdIn applies the In predicate on the "daily_limit_override_usd" field.
+func DailyLimitOverrideUsdIn(vs ...float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldIn(FieldDailyLimitOverrideUsd, vs...))
+}
+
+// DailyLimitOverrideUsdNotIn applies the NotIn predicate on the "daily_limit_override_usd" field.
+func DailyLimitOverrideUsdNotIn(vs ...float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNotIn(FieldDailyLimitOverrideUsd, vs...))
+}
+
+// DailyLimitOverrideUsdGT applies the GT predicate on the "daily_limit_override_usd" field.
+func DailyLimitOverrideUsdGT(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldGT(FieldDailyLimitOverrideUsd, v))
+}
+
+// DailyLimitOverrideUsdGTE applies the GTE predicate on the "daily_limit_override_usd" field.
+func DailyLimitOverrideUsdGTE(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldGTE(FieldDailyLimitOverrideUsd, v))
+}
+
+// DailyLimitOverrideUsdLT applies the LT predicate on the "daily_limit_override_usd" field.
+func DailyLimitOverrideUsdLT(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldLT(FieldDailyLimitOverrideUsd, v))
+}
+
+// DailyLimitOverrideUsdLTE applies the LTE predicate on the "daily_limit_override_usd" field.
+func DailyLimitOverrideUsdLTE(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldLTE(FieldDailyLimitOverrideUsd, v))
+}
+
+// DailyLimitOverrideUsdIsNil applies the IsNil predicate on the "daily_limit_override_usd" field.
+func DailyLimitOverrideUsdIsNil() predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldIsNull(FieldDailyLimitOverrideUsd))
+}
+
+// DailyLimitOverrideUsdNotNil applies the NotNil predicate on the "daily_limit_override_usd" field.
+func DailyLimitOverrideUsdNotNil() predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNotNull(FieldDailyLimitOverrideUsd))
+}
+
+// WeeklyLimitOverrideUsdEQ applies the EQ predicate on the "weekly_limit_override_usd" field.
+func WeeklyLimitOverrideUsdEQ(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldEQ(FieldWeeklyLimitOverrideUsd, v))
+}
+
+// WeeklyLimitOverrideUsdNEQ applies the NEQ predicate on the "weekly_limit_override_usd" field.
+func WeeklyLimitOverrideUsdNEQ(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNEQ(FieldWeeklyLimitOverrideUsd, v))
+}
+
+// WeeklyLimitOverrideUsdIn applies the In predicate on the "weekly_limit_override_usd" field.
+func WeeklyLimitOverrideUsdIn(vs ...float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldIn(FieldWeeklyLimitOverrideUsd, vs...))
+}
+
+// WeeklyLimitOverrideUsdNotIn applies the NotIn predicate on the "weekly_limit_override_usd" field.
+func WeeklyLimitOverrideUsdNotIn(vs ...float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNotIn(FieldWeeklyLimitOverrideUsd, vs...))
+}
+
+// WeeklyLimitOverrideUsdGT applies the GT predicate on the "weekly_limit_override_usd" field.
+func WeeklyLimitOverrideUsdGT(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldGT(FieldWeeklyLimitOverrideUsd, v))
+}
+
+// WeeklyLimitOverrideUsdGTE applies the GTE predicate on the "weekly_limit_override_usd" field.
+func WeeklyLimitOverrideUsdGTE(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldGTE(FieldWeeklyLimitOverrideUsd, v))
+}
+
+// WeeklyLimitOverrideUsdLT applies the LT predicate on the "weekly_limit_override_usd" field.
+func WeeklyLimitOverrideUsdLT(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldLT(FieldWeeklyLimitOverrideUsd, v))
+}
+
+// WeeklyLimitOverrideUsdLTE applies the LTE predicate on the "weekly_limit_override_usd" field.
+func WeeklyLimitOverrideUsdLTE(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldLTE(FieldWeeklyLimitOverrideUsd, v))
+}
+
+// WeeklyLimitOverrideUsdIsNil applies the IsNil predicate on the "weekly_limit_override_usd" field.
+func WeeklyLimitOverrideUsdIsNil() predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldIsNull(FieldWeeklyLimitOverrideUsd))
+}
+
+// WeeklyLimitOverrideUsdNotNil applies the NotNil predicate on the "weekly_limit_override_usd" field.
+func WeeklyLimitOverrideUsdNotNil() predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNotNull(FieldWeeklyLimitOverrideUsd))
+}
+
+// MonthlyLimitOverrideUsdEQ applies the EQ predicate on the "monthly_limit_override_usd" field.
+func MonthlyLimitOverrideUsdEQ(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldEQ(FieldMonthlyLimitOverrideUsd, v))
+}
+
+// MonthlyLimitOverrideUsdNEQ applies the NEQ predicate on the "monthly_limit_override_usd" field.
+func MonthlyLimitOverrideUsdNEQ(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNEQ(FieldMonthlyLimitOverrideUsd, v))
+}
+
+// MonthlyLimitOverrideUsdIn applies the In predicate on the "monthly_limit_override_usd" field.
+func MonthlyLimitOverrideUsdIn(vs ...float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldIn(FieldMonthlyLimitOverrideUsd, vs...))
+}
+
+// MonthlyLimitOverrideUsdNotIn applies the NotIn predicate on the "monthly_limit_override_usd" field.
+func MonthlyLimitOverrideUsdNotIn(vs ...float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNotIn(FieldMonthlyLimitOverrideUsd, vs...))
+}
+
+// MonthlyLimitOverrideUsdGT applies the GT predicate on the "monthly_limit_override_usd" field.
+func MonthlyLimitOverrideUsdGT(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldGT(FieldMonthlyLimitOverrideUsd, v))
+}
+
+// MonthlyLimitOverrideUsdGTE applies the GTE predicate on the "monthly_limit_override_usd" field.
+func MonthlyLimitOverrideUsdGTE(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldGTE(FieldMonthlyLimitOverrideUsd, v))
+}
+
+// MonthlyLimitOverrideUsdLT applies the LT predicate on the "monthly_limit_override_usd" field.
+func MonthlyLimitOverrideUsdLT(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldLT(FieldMonthlyLimitOverrideUsd, v))
+}
+
+// MonthlyLimitOverrideUsdLTE applies the LTE predicate on the "monthly_limit_override_usd" field.
+func MonthlyLimitOverrideUsdLTE(v float64) predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldLTE(FieldMonthlyLimitOverrideUsd, v))
+}
+
+// MonthlyLimitOverrideUsdIsNil applies the IsNil predicate on the "monthly_limit_override_usd" field.
+func MonthlyLimitOverrideUsdIsNil() predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldIsNull(FieldMonthlyLimitOverrideUsd))
+}
+
+// MonthlyLimitOverrideUsdNotNil applies the NotNil predicate on the "monthly_limit_override_usd" field.
+func MonthlyLimitOverrideUsdNotNil() predicate.UserSubscription {
+	return predicate.UserSubscription(sql.FieldNotNull(FieldMonthlyLimitOverrideUsd))
 }
 
 // CacheRevisionEQ applies the EQ predicate on the "cache_revision" field.

@@ -233,6 +233,9 @@ func incrementUsageBillingSubscription(ctx context.Context, tx *sql.Tx, subscrip
 			us.daily_usage_usd,
 			us.weekly_usage_usd,
 			us.monthly_usage_usd,
+			us.daily_limit_override_usd,
+			us.weekly_limit_override_usd,
+			us.monthly_limit_override_usd,
 			us.cache_revision
 	`
 	snapshot := &service.SubscriptionCacheData{}
@@ -242,6 +245,9 @@ func incrementUsageBillingSubscription(ctx context.Context, tx *sql.Tx, subscrip
 		&snapshot.DailyUsage,
 		&snapshot.WeeklyUsage,
 		&snapshot.MonthlyUsage,
+		&snapshot.DailyLimitOverride,
+		&snapshot.WeeklyLimitOverride,
+		&snapshot.MonthlyLimitOverride,
 		&snapshot.Version,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
