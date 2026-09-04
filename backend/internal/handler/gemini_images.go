@@ -323,7 +323,7 @@ func (h *GatewayHandler) GeminiImages(c *gin.Context) {
 					return
 				}
 				if h.openAIGatewayService != nil && failoverErr.ShouldReportAccountScheduleFailure() {
-					h.openAIGatewayService.ReportOpenAIAccountScheduleResult(account.ID, requestModel, false, nil)
+					h.openAIGatewayService.ReportOpenAIAccountScheduleResult(account, requestModel, false, nil)
 				}
 				switch fs.HandleFailoverError(requestCtx, h.gatewayService, account.ID, account.Platform, account.GetPoolModeRetryCount(), failoverErr) {
 				case FailoverContinue:
@@ -345,7 +345,7 @@ func (h *GatewayHandler) GeminiImages(c *gin.Context) {
 			return
 		}
 		if h.openAIGatewayService != nil {
-			h.openAIGatewayService.ReportOpenAIAccountScheduleResult(account.ID, requestModel, true, nil)
+			h.openAIGatewayService.ReportOpenAIAccountScheduleResult(account, requestModel, true, nil)
 		}
 
 		if statusCode >= 400 {
@@ -432,24 +432,22 @@ func recordGeminiImageUsage(
 	sessionID := service.ExtractClientSessionID(c)
 
 	h.submitUsageRecordTask(c.Request.Context(), func(ctx context.Context) {
-		if err := h.gatewayService.RecordUsageWithLongContext(ctx, &service.RecordUsageLongContextInput{
-			Result:                result,
-			QuotaPlatform:         quotaPlatform,
-			APIKey:                apiKey,
-			User:                  apiKey.User,
-			Account:               account,
-			Subscription:          subscription,
-			PricingAt:             pricingAt,
-			InboundEndpoint:       inboundEndpoint,
-			UpstreamEndpoint:      upstreamEndpoint,
-			UserAgent:             userAgent,
-			IPAddress:             clientIP,
-			RequestPayloadHash:    requestPayloadHash,
-			LongContextThreshold:  200000,
-			LongContextMultiplier: 2.0,
-			APIKeyService:         h.apiKeyService,
-			SessionID:             sessionID,
-			ChannelUsageFields:    clientRequestedUsageFields(c, channelMapping, reqModel, upstreamModel),
+		if err := h.gatewayService.RecordUsage(ctx, &service.RecordUsageInput{
+			Result:             result,
+			QuotaPlatform:      quotaPlatform,
+			APIKey:             apiKey,
+			User:               apiKey.User,
+			Account:            account,
+			Subscription:       subscription,
+			PricingAt:          pricingAt,
+			InboundEndpoint:    inboundEndpoint,
+			UpstreamEndpoint:   upstreamEndpoint,
+			UserAgent:          userAgent,
+			IPAddress:          clientIP,
+			RequestPayloadHash: requestPayloadHash,
+			APIKeyService:      h.apiKeyService,
+			SessionID:          sessionID,
+			ChannelUsageFields: clientRequestedUsageFields(c, channelMapping, reqModel, upstreamModel),
 		}); err != nil {
 			logger.L().With(
 				zap.String("component", "handler.gateway.gemini_images"),
