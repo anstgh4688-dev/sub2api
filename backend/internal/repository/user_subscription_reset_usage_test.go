@@ -15,7 +15,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 )
 
-func TestResetUsageWindows_UsesAtomicParentChargeSQL(t *testing.T) {
+func TestResetUsageWindows_UsesAtomicParentDeductionSQL(t *testing.T) {
 	var capturedSQL string
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(captureEntQueryMatcher{actual: &capturedSQL}))
 	require.NoError(t, err)
@@ -36,7 +36,7 @@ func TestResetUsageWindows_UsesAtomicParentChargeSQL(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 
 	normalized := strings.ToLower(normalizeSQLWhitespace(capturedSQL))
-	require.Contains(t, normalized, "weekly_usage_usd = case when $3 then 0 when $2 then weekly_usage_usd + daily_usage_usd else weekly_usage_usd end")
-	require.Contains(t, normalized, "monthly_usage_usd = case when $4 then 0 else monthly_usage_usd + case when $2 then daily_usage_usd else 0 end + case when $3 then weekly_usage_usd else 0 end end")
+	require.Contains(t, normalized, "weekly_usage_usd = case when $3 then 0 when $2 then greatest(0::numeric, weekly_usage_usd - daily_usage_usd) else weekly_usage_usd end")
+	require.Contains(t, normalized, "monthly_usage_usd = case when $4 then 0 else greatest(0::numeric, monthly_usage_usd - case when $2 then daily_usage_usd else 0 end - case when $3 then weekly_usage_usd else 0 end) end")
 	require.Contains(t, normalized, "daily_usage_usd = case when $2 then 0 else daily_usage_usd end")
 }
