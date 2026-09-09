@@ -423,24 +423,25 @@ func (r *userSubscriptionRepository) ResetUsageWindows(ctx context.Context, id i
 		return service.ErrInvalidInput
 	}
 
-	// A manual reset grants the selected period's consumed amount back. Charge that
-	// amount to each unreset parent period so the grant still consumes parent quota.
-	// PostgreSQL evaluates every SET expression from the pre-update row, keeping the
-	// transfer and reset atomic even when multiple periods are selected together.
+	// A manual reset grants the selected period's consumed amount back. Release that
+	// amount from each unreset parent period so the parent counters remain aligned
+	// with the reset child. PostgreSQL evaluates every SET expression from the
+	// pre-update row, keeping the transfer and reset atomic when several periods are
+	// selected together.
 	const resetSQL = `
 		UPDATE user_subscriptions
 		SET
 			daily_usage_usd = CASE WHEN $2 THEN 0 ELSE daily_usage_usd END,
 			weekly_usage_usd = CASE
 				WHEN $3 THEN 0
-				WHEN $2 THEN weekly_usage_usd + daily_usage_usd
+				WHEN $2 THEN GREATEST(0::numeric, weekly_usage_usd - daily_usage_usd)
 				ELSE weekly_usage_usd
 			END,
 			monthly_usage_usd = CASE
 				WHEN $4 THEN 0
-				ELSE monthly_usage_usd
-					+ CASE WHEN $2 THEN daily_usage_usd ELSE 0 END
-					+ CASE WHEN $3 THEN weekly_usage_usd ELSE 0 END
+				ELSE GREATEST(0::numeric, monthly_usage_usd
+					- CASE WHEN $2 THEN daily_usage_usd ELSE 0 END
+					- CASE WHEN $3 THEN weekly_usage_usd ELSE 0 END)
 			END,
 			daily_window_start = CASE
 				WHEN $2 THEN $5

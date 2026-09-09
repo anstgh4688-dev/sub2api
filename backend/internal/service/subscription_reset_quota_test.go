@@ -66,17 +66,23 @@ func (r *resetQuotaUserSubRepoStub) ResetUsageWindows(_ context.Context, _ int64
 		r.sub.WeeklyUsageUSD = 0
 		r.sub.WeeklyWindowStart = &periodicStart
 	} else if resetDaily {
-		r.sub.WeeklyUsageUSD += dailyUsage
+		r.sub.WeeklyUsageUSD -= dailyUsage
+		if r.sub.WeeklyUsageUSD < 0 {
+			r.sub.WeeklyUsageUSD = 0
+		}
 	}
 	if resetMonthly {
 		r.sub.MonthlyUsageUSD = 0
 		r.sub.MonthlyWindowStart = &periodicStart
 	} else {
 		if resetDaily {
-			r.sub.MonthlyUsageUSD += dailyUsage
+			r.sub.MonthlyUsageUSD -= dailyUsage
 		}
 		if resetWeekly {
-			r.sub.MonthlyUsageUSD += weeklyUsage
+			r.sub.MonthlyUsageUSD -= weeklyUsage
+		}
+		if r.sub.MonthlyUsageUSD < 0 {
+			r.sub.MonthlyUsageUSD = 0
 		}
 	}
 	r.sub.CacheRevision++
@@ -135,7 +141,7 @@ func TestAdminResetQuota_ResetBoth(t *testing.T) {
 	require.Equal(t, resetAt, *result.WeeklyWindowStart)
 	require.Zero(t, result.DailyUsageUSD)
 	require.Zero(t, result.WeeklyUsageUSD)
-	require.Equal(t, float64(42), result.MonthlyUsageUSD)
+	require.Equal(t, float64(18), result.MonthlyUsageUSD)
 }
 
 func TestAdminResetQuota_ResetDailyOnly(t *testing.T) {
@@ -159,8 +165,8 @@ func TestAdminResetQuota_ResetDailyOnly(t *testing.T) {
 	require.False(t, stub.resetWeeklyCalled, "不应调用 ResetWeeklyUsage")
 	require.False(t, stub.resetMonthlyCalled, "不应调用 ResetMonthlyUsage")
 	require.Zero(t, result.DailyUsageUSD)
-	require.Equal(t, float64(12), result.WeeklyUsageUSD)
-	require.Equal(t, float64(32), result.MonthlyUsageUSD)
+	require.Equal(t, float64(8), result.WeeklyUsageUSD)
+	require.Equal(t, float64(28), result.MonthlyUsageUSD)
 }
 
 func TestAdminResetQuota_ResetWeeklyOnly(t *testing.T) {
@@ -185,7 +191,7 @@ func TestAdminResetQuota_ResetWeeklyOnly(t *testing.T) {
 	require.False(t, stub.resetMonthlyCalled, "不应调用 ResetMonthlyUsage")
 	require.Equal(t, float64(2), result.DailyUsageUSD)
 	require.Zero(t, result.WeeklyUsageUSD)
-	require.Equal(t, float64(40), result.MonthlyUsageUSD)
+	require.Equal(t, float64(20), result.MonthlyUsageUSD)
 }
 
 func TestAdminResetQuota_BothFalseReturnsError(t *testing.T) {
@@ -379,8 +385,8 @@ func TestAdminResetQuota_PublishesPostResetSnapshot(t *testing.T) {
 		Status:       SubscriptionStatusActive,
 		ExpiresAt:    result.ExpiresAt,
 		DailyUsage:   0,
-		WeeklyUsage:  18,
-		MonthlyUsage: 38,
+		WeeklyUsage:  8,
+		MonthlyUsage: 28,
 		Version:      8,
 	}, snapshot)
 	require.Equal(t, subCacheKey(20, 30), publishedKey)
