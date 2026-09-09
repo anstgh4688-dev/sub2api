@@ -777,7 +777,7 @@ export default {
       restore: '恢复',
       resetQuota: '重置配额',
       resetQuotaTitle: '重置用量配额',
-      resetQuotaConfirm: "请选择要为 '{user}' 重置的限额。重置日限额会把当前日用量计入周和月用量；重置周限额会把当前周用量计入月用量。若上级周期也被重置，则以上级归零为准。",
+      resetQuotaConfirm: "请选择要为 '{user}' 重置的限额。重置日限额会从周和月用量中扣除当前日用量；重置周限额会从月用量中扣除当前周用量。若上级周期也被重置，则以上级归零为准。",
       resetDailyQuota: '重置日限额',
       resetWeeklyQuota: '重置周限额',
       resetMonthlyQuota: '重置月限额',

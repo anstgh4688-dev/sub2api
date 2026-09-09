@@ -777,7 +777,7 @@ export default {
       restore: 'Restore',
       resetQuota: 'Reset Quota',
       resetQuotaTitle: 'Reset Usage Quota',
-      resetQuotaConfirm: "Choose which limit to reset for '{user}'. Resetting daily usage charges it to weekly and monthly usage; resetting weekly usage charges it to monthly usage. If a parent period is also reset, that parent is cleared.",
+      resetQuotaConfirm: "Choose which limit to reset for '{user}'. Resetting daily usage deducts it from weekly and monthly usage; resetting weekly usage deducts it from monthly usage. If a parent period is also reset, that parent is cleared.",
       resetDailyQuota: 'Reset Daily Limit',
       resetWeeklyQuota: 'Reset Weekly Limit',
       resetMonthlyQuota: 'Reset Monthly Limit',
