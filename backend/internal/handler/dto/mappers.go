@@ -283,9 +283,6 @@ func AccountFromServiceShallow(a *service.Account) *Account {
 		ParentAccountID:         a.ParentAccountID,
 		QuotaDimension:          a.QuotaDimension,
 	}
-	if a.IsOpenAIOAuthLike() {
-		out.CodexTurnTickets = service.OpenAICodexTicketStatuses(a, nil, 292, time.Now())
-	}
 
 	// 提取 5h 窗口费用控制和会话数量控制配置（仅 Anthropic OAuth/SetupToken 账号有效）
 	if a.IsAnthropicOAuthOrSetupToken() {
@@ -429,8 +426,8 @@ func redactAccountManagedExtra(extra map[string]any) map[string]any {
 			key == service.OpenCodeGoUsageAutoRefreshExtraKey,
 			key == service.OpenCodeGoUsageSnapshotExtraKey:
 			continue
-		case strings.HasPrefix(key, "codex_turn_ticket:"):
-			redacted[key] = service.SanitizeOpenAICodexTicketExtraValue(value)
+		case service.IsOpenAICodexTicketExtraKey(key):
+			continue
 		default:
 			redacted[key] = value
 		}
