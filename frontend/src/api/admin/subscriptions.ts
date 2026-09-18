@@ -13,7 +13,6 @@ import type {
   PaginatedResponse
 } from '@/types'
 
-<<<<<<< HEAD
 export type SubscriptionBulkAction = 'extend' | 'reset_quota' | 'revoke' | 'restore'
 
 export interface SubscriptionBulkActionRequest {
