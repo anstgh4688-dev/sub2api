@@ -426,7 +426,7 @@ func redactAccountManagedExtra(extra map[string]any) map[string]any {
 			key == service.OpenCodeGoUsageAutoRefreshExtraKey,
 			key == service.OpenCodeGoUsageSnapshotExtraKey:
 			continue
-		case service.IsOpenAICodexTicketExtraKey(key):
+		case service.IsOpenAICodexTicketPrivateExtraKey(key):
 			continue
 		default:
 			redacted[key] = value
