@@ -407,7 +407,7 @@ func finalizePostUsageBilling(ctx context.Context, p *postUsageBillingParams, de
 			}
 		}
 		deps.deferredService.ScheduleLastUsedUpdate(p.Account.ID)
-		return
+		return nil
 	}
 
 	if p.IsSubscriptionBill {
