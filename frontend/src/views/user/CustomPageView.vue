@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useResizeObserver } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
